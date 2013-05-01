@@ -1,4 +1,5 @@
 #include "portal-proxy.h"
+
 /*********************************************************************
 * called by toEvent every time it times out, 
 * will eventually be used to check if the server is still up. 
@@ -208,7 +209,7 @@ static void initServices(struct event_base *eBase, Service *serviceList) {
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_flags = 0;
 		hints.ai_protocol = 0; 
-		i = getaddrinfo(/*ipAddr*/"localhost", portNum, &hints, &server); // temporary change to local host to test other parts of the program 
+		i = getaddrinfo(ipAddr, portNum, &hints, &server); 
 		if (i != 0){														 
 			fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(i));
 			exit(0);
@@ -216,7 +217,7 @@ static void initServices(struct event_base *eBase, Service *serviceList) {
 		// create a bufferevent to listen to monitor, connect to monitor and send service name
 		// as a request for current ip address and port for that service
 		servList->b_monitor = bufferevent_socket_new(eBase, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST); 
-		bufferevent_setcb(servList->b_monitor, monitorRead, NULL, monitorEvent, serviceList); 
+		bufferevent_setcb(servList->b_monitor, monitorRead, NULL, cbEvent, serviceList); 
 		if(bufferevent_socket_connect(servList->b_monitor, server->ai_addr, server->ai_addrlen) != 0) { 
 			fprintf(stderr, "Error connecting to monitor\n"); 
 			bufferevent_free(servList->b_monitor); 
@@ -276,9 +277,11 @@ static void initServiceListeners(struct event_base *eBase, Service *servList) {
 * when triggered by a connecting client determines which service the client was connecting
 * for and connects them to the appropiate service.
 *****************************************************************************************/
-static void onClientConnect(struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *ctx){
+static void onClientConnect(struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *ctx){ 
 	Service *currService;
 	currService = (Service *) ctx;
+	ServicePack *currentServPack; 
+	currentServPack = (ServicePack *) malloc(sizeof(ServicePack));
 	struct event_base *base = evconnlistener_get_base(listener);
 	struct addrinfo hints = {};
 	struct addrinfo *servAddr;
@@ -292,9 +295,13 @@ static void onClientConnect(struct evconnlistener *listener, evutil_socket_t fd,
 			proxyPair->b_service = NULL;
 			proxyPair->next = NULL;
 
+			currentServPack->serv = currService; 
+
+
 			// create event buffers to proxy client
 			proxyPair->b_client =  bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
 			proxyPair->b_service = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
+			currentServPack->pair = proxyPair;
 			int i = 0; 
 			int j = 0; 
 			bool portNow = false;
@@ -321,7 +328,7 @@ static void onClientConnect(struct evconnlistener *listener, evutil_socket_t fd,
 				fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(i));
 				return;
 			}
-			bufferevent_setcb(proxyPair->b_client, proxyRead, NULL, NULL, currService); printf("current Service %s\n", currService->name);
+			bufferevent_setcb(proxyPair->b_client, proxyRead, NULL, cbEvent, currentServPack); printf("ip: %s port: %s service: %s\n", ipAddr, portNum, currService->name);
 			bufferevent_enable(proxyPair->b_client, EV_READ|EV_WRITE);
 			if (bufferevent_socket_connect(proxyPair->b_service, servAddr->ai_addr, servAddr->ai_addrlen) != 0) { 
 				fprintf(stderr, "Error Connecting to service\n");
@@ -331,7 +338,7 @@ static void onClientConnect(struct evconnlistener *listener, evutil_socket_t fd,
 				bufferevent_free(proxyPair->b_service);
 				return;
 			}
-			bufferevent_setcb(proxyPair->b_service, proxyRead, NULL, NULL, currService);
+			bufferevent_setcb(proxyPair->b_service, proxyRead, NULL, cbEvent, currentServPack);
 			bufferevent_enable(proxyPair->b_service, EV_READ|EV_WRITE);
 
 			// add pair of buffer events to clientList for this service
@@ -385,10 +392,13 @@ static void signal_cb(evutil_socket_t sig, short events, void *user_data) {
 	event_base_loopexit(base, &delay);
 }
 
-static void monitorEvent(struct bufferevent *bev, short what, void *ctx){ 
+/*****************************************************************************************
+* triggered by all event buffer event, reports errors and successful connects. 
+*****************************************************************************************/
+static void cbEvent(struct bufferevent *bev, short what, void *ctx){ 
 	if (what & BEV_EVENT_ERROR) {
 		unsigned long err;
-		while ((err = (bufferevent_get_openssl_error(bev)))) {
+		while ((err = (bufferevent_get_openssl_error(bev)))) { printf("1\n");
 			const char *msg = (const char*)
 			    ERR_reason_error_string(err);
 			const char *lib = (const char*)
@@ -406,7 +416,9 @@ static void monitorEvent(struct bufferevent *bev, short what, void *ctx){
 	if (what & BEV_EVENT_CONNECTED)
 		printf("CONNECTION SUCCESSFUL\n");
 	if (what & BEV_EVENT_TIMEOUT)
-		printf("TIMEOUT\n");}
+		printf("TIMEOUT\n");
+}
+
 /*****************************************************************************************
 * Call back for information comming in from the monitor, in the buffer info function 
 * should recive a c-string that contains the name of the service and the ip address and 
@@ -469,54 +481,45 @@ static void monitorRead(struct bufferevent *bev, void *servList){
 * to, function passes the info through. If the service is not there will attempt to 
 * reconnect and send the info. 
 *****************************************************************************************/
-static void proxyRead(struct bufferevent *bev, void *serv) { 
-	Service *currServ = (Service *) serv; printf("proxyRead current Service %s\n", currServ->name);
-	ServCliPair *currPair, *temp;
-	bool matchFound = false;
+static void proxyRead(struct bufferevent *bev, void *srvPck) { 
+	ServicePack *servPack = (ServicePack *) srvPck;
+	ServCliPair *curPair = servPack->pair;
 	struct bufferevent *partner = NULL;
 	struct evbuffer *src, *dst;
 
 	src = bufferevent_get_input(bev); 
+	if(bev == curPair->b_service)
+		partner = curPair->b_client;
+	else 
+		partner = curPair->b_service;
 
-			// step through services untill match for bev is found
-	currPair = currServ->clientList;
-	temp = currServ->clientList;
-	while (!matchFound && currPair != NULL) {
-		if (currPair->b_client == bev) { 
-			matchFound = true;
-			partner = currPair->b_service;
-			while(temp != currPair && temp->next != currPair)
-				temp = temp->next;
-		} else if (currPair->b_service == bev) { 
-			matchFound = true;
-			partner = currPair->b_client;
-			while(temp != currPair && temp->next != currPair)
-				temp = temp->next;
-		} else 
-			currPair = currPair->next;
-		if (matchFound){ 
-			if(!partner){ printf("partner does not exists\n");
-				// free the bufferevent and remove the curr pair from the clientList and return
-/*				if (temp == currServ->clientList){
-					currServ->clientList = currServ->clientList->next;
-					bufferevent_free(temp->b_client);
-					bufferevent_free(temp->b_service);
-					free(temp);
-					return;
-				}
-				ServCliPair *tempTwo;
-				tempTwo = temp->next;
-				temp->next = tempTwo->next;
-				bufferevent_free(tempTwo->b_client);
-				bufferevent_free(tempTwo->b_service);
-				free(tempTwo);
-				return;
-*/		}
-			dst = bufferevent_get_output(partner); 
-			//evbuffer_add_buffer(dst, src);  
+	if(!partner){ 
+// no partner free the bufferevents free associated memory and remove pair from clientListand return 
+		ServCliPair *temp = servPack->serv->clientList;
+		if (temp = servPack->pair) {		// the trigger buffer is part of the first client service pair in the list
+			servPack->serv->clientList = temp->next;
+			bufferevent_free(temp->b_client);
+			bufferevent_free(temp->b_service);
+			free(temp);
 			return;
 		}
+		while (temp != NULL) {
+			if (temp->next == servPack->pair) {
+				curPair = temp;
+				temp = temp->next;
+				curPair->next = temp->next;
+				bufferevent_free(temp->b_client);
+				bufferevent_free(temp->b_service);
+				free(temp);
+				return;
+			}
+			temp = temp->next;
+		}
+		return;
 	}
+	dst = bufferevent_get_output(partner); 
+	evbuffer_add_buffer(dst, src);  
+	return;
 }
 /*
 	Service *temp = servList;

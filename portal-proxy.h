@@ -5,13 +5,8 @@
 #include <errno.h>
 #include <stdbool.h>
 
-#ifdef WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
 #include <sys/socket.h>
 #include <netinet/in.h>
-#endif
 
 #include <event2/bufferevent_ssl.h>
 #include <event2/bufferevent.h>
@@ -42,6 +37,11 @@ typedef struct __Service {
 
 } Service;
 
+typedef struct __ServicePackage {
+	Service *serv;
+	ServCliPair *pair;
+} ServicePack;
+
 static void usage();
 static char* readFile(char *name, long *len);
 static Service* parseConfigFile(char *buffer, long fileSize);
@@ -52,5 +52,5 @@ void freeAllListeners(Service *servList);
 void freeAllServiceNodes(Service *servList);
 static void signal_cb(evutil_socket_t sig, short events, void *user_data);
 static void monitorRead (struct bufferevent *bev, void *serv);
-static void proxyRead(struct bufferevent *bev, void *srvLst);
-static void monitorEvent(struct bufferevent *bev, short what, void *ctx);
+static void proxyRead(struct bufferevent *bev, void *srvPck);
+static void cbEvent(struct bufferevent *bev, short what, void *ctx);
