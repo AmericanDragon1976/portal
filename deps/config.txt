@@ -1,0 +1,7 @@
+service mysql
+  listen 127.0.0.1:3306
+  monitor 192.168.2.4:4044
+
+service redis
+  listen 127.0.0.1:2465
+  monitor 192.168.2.5:4044
