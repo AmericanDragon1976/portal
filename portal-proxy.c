@@ -4,10 +4,10 @@
 * called by toEvent every time it times out, 
 * will eventually be used to check if the server is still up. 
 *********************************************************************/
-static void timeout_cb(evutil_socket_t fd, short what, void *arg) { 
+static void timeoutCB(evutil_socket_t fd, short what, void *arg) { 
 /*  service *test = (service *) arg;
     bufferevent_write(test->b_monitor, test->name, sizeof(test->name));
-    printf("timeout_cb called\n");
+    printf("timeoutCB called\n");
     printf("Server up\n");
 */}
 
@@ -60,11 +60,11 @@ struct timeval five_seconds;
 five_seconds.tv_sec = 5;
 five_seconds.tv_usec = 0;
 struct event *toEvent; // time out event do this ever so often
-toEvent = event_new(base, -1, EV_PERSIST, timeout_cb, serviceList);
+toEvent = event_new(base, -1, EV_PERSIST, timeoutCB, serviceList);
 event_add(toEvent, &five_seconds);
 
 // create listener to handle proper shutdown in case of interrupt signal
-    signal_event = evsignal_new(base, SIGINT, signal_cb, (void *) base);
+    signal_event = evsignal_new(base, SIGINT, signalCB, (void *) base);
     if (!signal_event || event_add(signal_event, NULL) < 0) {
         fprintf(stderr, "Could not create/add signal event.\n");
         exit(0);
@@ -215,7 +215,7 @@ static void initServices(struct event_base *eBase, service *serviceList) {
         // create a bufferevent to listen to monitor, connect to monitor and send service name
         // as a request for current ip address and port for that service
         servList->b_monitor = bufferevent_socket_new(eBase, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST); 
-        bufferevent_setcb(servList->b_monitor, monitorRead, NULL, cbEvent, serviceList); 
+        bufferevent_setcb(servList->b_monitor, monitorReadCB, NULL, eventCB, serviceList); 
         if(bufferevent_socket_connect(servList->b_monitor, server->ai_addr, server->ai_addrlen) != 0) { 
             fprintf(stderr, "Error connecting to monitor\n"); 
             bufferevent_free(servList->b_monitor); 
@@ -264,7 +264,7 @@ static void initServiceListeners(struct event_base *eBase, service *servList) {
         serv_addr.sin_family = AF_INET;
         serv_addr.sin_addr.s_addr = (*inp).s_addr; 
         serv_addr.sin_port = htons(portno); 
-        servList->listener = evconnlistener_new_bind(eBase, onClientConnect, servList, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &serv_addr, sizeof(serv_addr)); 
+        servList->listener = evconnlistener_new_bind(eBase, clientConnectCB, servList, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &serv_addr, sizeof(serv_addr)); 
         if (!servList->listener)
             printf("Couldn't create Listener\n");
         servList = servList->next;
@@ -275,7 +275,7 @@ static void initServiceListeners(struct event_base *eBase, service *servList) {
 * when triggered by a connecting client determines which service the client was connecting
 * for and connects them to the appropiate service.
 *****************************************************************************************/
-static void onClientConnect(struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *ctx){ 
+static void clientConnectCB(struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *ctx){ 
     service *currService;
     currService = (service *) ctx;
     servicePack *currentServPack; 
@@ -325,7 +325,7 @@ static void onClientConnect(struct evconnlistener *listener, evutil_socket_t fd,
                 fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(i));
                 return;
             }
-            bufferevent_setcb(proxyPair->b_client, proxyRead, NULL, cbEvent, currentServPack); 
+            bufferevent_setcb(proxyPair->b_client, proxyReadCB, NULL, eventCB, currentServPack); 
             bufferevent_enable(proxyPair->b_client, EV_READ|EV_WRITE);
             if (bufferevent_socket_connect(proxyPair->b_service, servAddr->ai_addr, servAddr->ai_addrlen) != 0) { 
                 fprintf(stderr, "Error Connecting to service\n");
@@ -335,7 +335,7 @@ static void onClientConnect(struct evconnlistener *listener, evutil_socket_t fd,
                 bufferevent_free(proxyPair->b_service);
                 return;
             }
-            bufferevent_setcb(proxyPair->b_service, proxyRead, NULL, cbEvent, currentServPack);
+            bufferevent_setcb(proxyPair->b_service, proxyReadCB, NULL, eventCB, currentServPack);
             bufferevent_enable(proxyPair->b_service, EV_READ|EV_WRITE);
 
             // add pair of buffer events to clientList for this service
@@ -379,7 +379,7 @@ void freeAllServiceNodes(service *servList){
 /*****************************************************************************************
 * catches interrupt signal and allows the program to cleanup before exiting.
 *****************************************************************************************/
-static void signal_cb(evutil_socket_t sig, short events, void *user_data) {
+static void signalCB(evutil_socket_t sig, short events, void *user_data) {
     struct event_base *base = (struct event_base *) user_data;
     struct timeval delay = { 2, 0 };
 
@@ -392,7 +392,7 @@ static void signal_cb(evutil_socket_t sig, short events, void *user_data) {
 /*****************************************************************************************
 * triggered by all event buffer event, reports errors and successful connects. 
 *****************************************************************************************/
-static void cbEvent(struct bufferevent *bev, short what, void *ctx){ 
+static void eventCB(struct bufferevent *bev, short what, void *ctx){ 
     if (what & BEV_EVENT_ERROR) {
         unsigned long err;
         while ((err = (bufferevent_get_openssl_error(bev)))) { printf("1\n");
@@ -424,7 +424,7 @@ static void cbEvent(struct bufferevent *bev, short what, void *ctx){
 * in the serv member of the service struct, and then call function to reset connections
 * for all clients connected to that service
 *****************************************************************************************/
-static void monitorRead(struct bufferevent *bev, void *servList){
+static void monitorReadCB(struct bufferevent *bev, void *servList){
     service *currentServ = (service *) servList;
     struct evbuffer *input = bufferevent_get_input(bev);
     int len, i, j, k;
@@ -478,7 +478,7 @@ static void monitorRead(struct bufferevent *bev, void *servList){
 * to, function passes the info through. If the service is not there will attempt to 
 * reconnect and send the info. 
 *****************************************************************************************/
-static void proxyRead(struct bufferevent *bev, void *srvPck) { 
+static void proxyReadCB(struct bufferevent *bev, void *srvPck) { 
     servicePack *servPack = (servicePack *) srvPck;
     servCliPair *curPair = servPack->pair;
     struct bufferevent *partner = NULL;

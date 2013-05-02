@@ -39,15 +39,15 @@ typedef struct servicePackage {
     servCliPair *pair;
 } servicePack;
 
-static void usage();
-static char* readFile(char *name, long *len);
-static service* parseConfigFile(char *buffer, long fileSize);
-static void initServices(struct event_base *eBase, service *servList);
-static void initServiceListeners(struct event_base *eBase, service *servList);
-static void onClientConnect(struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *ctx);
-void freeAllListeners(service *servList);
-void freeAllServiceNodes(service *servList);
-static void signal_cb(evutil_socket_t sig, short events, void *user_data);
-static void monitorRead (struct bufferevent *bev, void *serv);
-static void proxyRead(struct bufferevent *bev, void *srvPck);
-static void cbEvent(struct bufferevent *bev, short what, void *ctx);
+static void usage ();
+static char* readFile (char *name, long *len);
+static service* parseConfigFile (char *buffer, long fileSize);
+static void initServices (struct event_base *eBase, service *servList);
+static void initServiceListeners (struct event_base *eBase, service *servList);
+static void clientConnectCB (struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *ctx);
+void freeAllListeners (service *servList);
+void freeAllServiceNodes (service *servList);
+static void signalCB (evutil_socket_t sig, short events, void *user_data);
+static void monitorReadCB (struct bufferevent *bev, void *serv);
+static void proxyReadCB (struct bufferevent *bev, void *srvPck);
+static void eventCB (struct bufferevent *bev, short what, void *ctx);
