@@ -2,6 +2,20 @@
 #include "setup.h"
 #include "proxy.h"
 
+/* verifies command line arguments, must have flag -C and path/to/comfig.txt if 
+* specific uses of the -C flag or other flags are added this function should be 
+* altered accordingly */
+bool verifyComndLnArgs(int argc, char **argv) {
+
+    if (argc < 3)               // 3 args are program name, flag, path to config file. 
+        return false;
+
+    if (!strcmp(argv[1], "-C")) // if other flags added or effect of -C flag changes alter here. 
+        return false;
+
+    return true;
+}
+
 /* prints to screen proper syntax for running the program, then exits */
 void usage(){
     printf("Usage is as follows: \n");
@@ -120,50 +134,65 @@ void initServices(struct event_base *eBase, service *serviceList) {
     struct addrinfo hints = {};
 
     while (servList != NULL) {
-        // parse monitor addr for ip and port numbers 
         char ipAddr[16], portNum[6];
-        bool portNow = false;
         int i = 0; 
         int j = 0; 
-        for (i = 0; servList->monitor[i] != '\0'; ) {
-            if (servList->monitor[i] == ':') {
-                i++;
-                ipAddr[j] = '\0';
-                portNow = true;
-                j = 0;
-            }
-            if (portNow == false)
-                ipAddr[j++] = servList->monitor[i++];
-            else 
-                portNum[j++] = servList->monitor[i++];
+
+        if (!parseAddress(servList->monitor, ipAddr, portNum))
+            fprintf(stderr, "Bad address unable to connect to monitor for %s\n", servList->name);
+        else {
+            hints.ai_family = AF_INET;
+            hints.ai_socktype = SOCK_STREAM;
+            hints.ai_flags = 0;
+            hints.ai_protocol = 0; 
+            i = getaddrinfo(ipAddr, portNum, &hints, &server); 
+            if (i != 0){                                                         
+                fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(i));
+                exit(0);
+            } 
+            // create a bufferevent to listen to monitor, connect to monitor and send service name
+            // as a request for current ip address and port for that service
+            servList->b_monitor = bufferevent_socket_new(eBase, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST); 
+            bufferevent_setcb(servList->b_monitor, monitorReadCB, NULL, eventCB, serviceList); 
+            if(bufferevent_socket_connect(servList->b_monitor, server->ai_addr, server->ai_addrlen) != 0) { 
+                fprintf(stderr, "Error connecting to monitor\n"); 
+                bufferevent_free(servList->b_monitor); 
+            } 
+            bufferevent_enable(servList->b_monitor, EV_READ|EV_WRITE);
+            bufferevent_write(servList->b_monitor, servList->name, sizeof(servList->name));
         }
-        portNum[j] = '\0';
-
-        // get the address info for the ip address and port
-        hints.ai_family = AF_INET;
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_flags = 0;
-        hints.ai_protocol = 0; 
-        i = getaddrinfo(ipAddr, portNum, &hints, &server); 
-        if (i != 0){                                                         
-            fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(i));
-            exit(0);
-        } 
-        // create a bufferevent to listen to monitor, connect to monitor and send service name
-        // as a request for current ip address and port for that service
-        servList->b_monitor = bufferevent_socket_new(eBase, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST); 
-        bufferevent_setcb(servList->b_monitor, monitorReadCB, NULL, eventCB, serviceList); 
-        if(bufferevent_socket_connect(servList->b_monitor, server->ai_addr, server->ai_addrlen) != 0) { 
-            fprintf(stderr, "Error connecting to monitor\n"); 
-            bufferevent_free(servList->b_monitor); 
-        } 
-        bufferevent_enable(servList->b_monitor, EV_READ|EV_WRITE);
-        bufferevent_write(servList->b_monitor, servList->name, sizeof(servList->name));
-
         servList = servList->next;
     }
 
     return;
+}
+
+/* Takes an adrress in the form a.b.c.d:portnumber and parses it storing the ip
+* address and port number in the approiate char arrays, addrToParse[22], ipAddr[16] 
+* and portNum[6], returns true if successful otherwise returns false */
+bool parseAddress(char *addrToParse, char *ipAddr, char* portNum) {
+    int i, j;
+    j = 0;
+    bool portNow = false;
+
+    if ( addrToParse == NULL)
+        return portNow;
+
+    for (i = 0; i < 22; ){
+        if (addrToParse[i] == ':') {
+            i++;
+            ipAddr[j] = '\0';
+            portNow = true; 
+            j = 0;
+        }
+        if (portNow == false)
+            ipAddr[j++] = addrToParse[i++];
+        else 
+            portNum[j++] = addrToParse[i++];
+    }
+    portNum[j] = '\0';
+
+    return portNow;
 }
 
 /* goes through the list of services, creats a listener to accept new clients
@@ -179,28 +208,19 @@ void initServiceListeners(struct event_base *eBase, service *servList) {
         bool portNow = false;
         int i = 0; 
         int j = 0; 
-        for (i = 0; servList->listen[i] != '\0'; ) {
-            if (servList->listen[i] == ':') {
-                i++;
-                ipAddr[j] = '\0';
-                portNow = true;
-                j = 0;
-            }
-            if (portNow == false)
-                ipAddr[j++] = servList->listen[i++];
-            else 
-                portNum[j++] = servList->listen[i++];
-        } 
-        portNum[j] = '\0';
-        portno = atoi(portNum);
-        i = inet_aton(ipAddr, inp); 
-        memset(&serv_addr,0, sizeof(serv_addr));
-        serv_addr.sin_family = AF_INET;
-        serv_addr.sin_addr.s_addr = (*inp).s_addr; 
-        serv_addr.sin_port = htons(portno); 
-        servList->listener = evconnlistener_new_bind(eBase, clientConnectCB, servList, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &serv_addr, sizeof(serv_addr)); 
-        if (!servList->listener)
-            printf("Couldn't create Listener\n");
+        if (!parseAddress(servList->listen, ipAddr, portNum))
+            fprintf(stderr, "Bad address unable listen for clients for service %s\n", servList->name);
+        else {
+            portno = atoi(portNum);
+            i = inet_aton(ipAddr, inp); 
+            memset(&serv_addr,0, sizeof(serv_addr));
+            serv_addr.sin_family = AF_INET;
+            serv_addr.sin_addr.s_addr = (*inp).s_addr; 
+            serv_addr.sin_port = htons(portno); 
+            servList->listener = evconnlistener_new_bind(eBase, clientConnectCB, servList, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &serv_addr, sizeof(serv_addr)); 
+            if (!servList->listener)
+                printf("Couldn't create Listener\n");
+        }
         servList = servList->next;
     }
 }

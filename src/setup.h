@@ -26,6 +26,11 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
+/* verifies command line arguments, must have flag -C and path/to/comfig.txt if 
+* specific uses of the -C flag or other flags are added this function should be 
+* altered accordingly */
+bool verifyComndLnArgs(int argc, char **argv);
+
 /* prints to screen proper syntax for running the program, then exits */
 void usage ();
 
@@ -47,6 +52,11 @@ service* parseConfigFile (char *buffer, int fileSize);
 *   connects to monitor
 *   requests service addr */
 void initServices (struct event_base *eBase, service *servList);
+
+/* Takes an adrress in the form a.b.c.d:portnumber and parses it storing the ip
+* address and port number in the approiate char arrays, addrToParse[22], ipAddr[16] 
+* and portNum[6], returns true if successful otherwise returns false */
+bool parseAddress(char *addrToParse, char *ipAddr, char* portNum);
 
 /* goes through the list of services, creats a listener to accept new clients
 * for each service in the list */

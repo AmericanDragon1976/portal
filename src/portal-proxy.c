@@ -13,33 +13,22 @@ void timeoutCB(evutil_socket_t fd, short what, void *arg) {
 */}
 
 int main(int argc, char **argv) {
-    bool cFlag = false;
-    bool flagsSet = false;
     int i = 0;
     service *serviceList = NULL;
     char fileName[100];
     FILE *filePointer;
     int fileSize;
-    char *fileBuffer;
-    size_t result;
+    char *fileBuffer, **cmdArgs;
     struct event_base *base;
     struct event *signalEvent;
 
-    if (argc <3)
-        usage();
-    char *flag = argv[1];
+    /* Currently -C flag is required but has no effect, if  others are
+    * added later to change behavior change the verfyComndlnArgs() function 
+    * to change what they do*/
 
-/* checking flags set Currently only -C flag is used but others could be 
-added later by adding additional if statements before checking if flags
-have been set at the end of the for loop. */
-    for (i = 1; i < argc - 1; i++) { 
-        if (!strcmp(argv[i], "-C")) {
-            cFlag = true;
-            flagsSet = true;                        // TODO: turn this section into a function 
-        }
-        if (!flagsSet)
-            usage();
-    }
+    cmdArgs = argv;
+    if (!verifyComndLnArgs(argc, cmdArgs))
+        usage();
 
     strcpy(fileName, argv[2]);
     fileSize = getConfigFileLen(fileName);

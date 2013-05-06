@@ -1,4 +1,5 @@
 #include "portal-proxy.h"
+#include "setup.h"
 #include "proxy.h"
 
 /* Call back for information comming in from the monitor, in the buffer info. Function 
@@ -85,46 +86,37 @@ void clientConnectCB (struct evconnlistener *listener, evutil_socket_t fd, struc
             int i = 0; 
             int j = 0; 
             bool portNow = false;
-            // parse address for ip and socket
-            for (i = 0; currService->serv[i] != '\0'; ) {
-                if (currService->serv[i] == ':') {
-                    i++;
-                    portNow = true;
-                    j = 0;
-                }
-                if (portNow == false)
-                    ipAddr[j++] = currService->serv[i++];
-                else 
-                    portNum[j++] = currService->serv[i++];
-            }
-            portNum[j] = '\0'; 
-            // connect to service
-            hints.ai_family = AF_INET;
-            hints.ai_socktype = SOCK_STREAM;
-            hints.ai_flags = 0;
-            hints.ai_protocol = 0; 
-            i = getaddrinfo(ipAddr, portNum, &hints, &servAddr);
-            if (i != 0) {
-                fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(i));
-                return;
-            }
-            bufferevent_setcb(proxyPair->b_client, proxyReadCB, NULL, eventCB, currentServPack); 
-            bufferevent_enable(proxyPair->b_client, EV_READ|EV_WRITE);
-            if (bufferevent_socket_connect(proxyPair->b_service, servAddr->ai_addr, servAddr->ai_addrlen) != 0) { 
-                fprintf(stderr, "Error Connecting to service\n");
-                char errorMsg[] = "Unable to connect, try again;";
-                bufferevent_write(proxyPair->b_client, &errorMsg, sizeof(errorMsg));
-                bufferevent_free(proxyPair->b_client);
-                bufferevent_free(proxyPair->b_service);
-                return;
-            }
-            bufferevent_setcb(proxyPair->b_service, proxyReadCB, NULL, eventCB, currentServPack);
-            bufferevent_enable(proxyPair->b_service, EV_READ|EV_WRITE);
 
-            // add pair of buffer events to clientList for this service
-            proxyPair->next = currService->clientList;
-            currService->clientList = proxyPair;
-        } 
+            if (!parseAddress(currService->serv, ipAddr, portNum))
+                fprintf(stderr, "Bad address unable to connect client to %s\n", currService->name);
+            else {
+                hints.ai_family = AF_INET;
+                hints.ai_socktype = SOCK_STREAM;
+                hints.ai_flags = 0;
+                hints.ai_protocol = 0; 
+                i = getaddrinfo(ipAddr, portNum, &hints, &servAddr);
+                if (i != 0) {
+                    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(i));
+                    return;
+                }
+                bufferevent_setcb(proxyPair->b_client, proxyReadCB, NULL, eventCB, currentServPack); 
+                bufferevent_enable(proxyPair->b_client, EV_READ|EV_WRITE);
+                if (bufferevent_socket_connect(proxyPair->b_service, servAddr->ai_addr, servAddr->ai_addrlen) != 0) { 
+                    fprintf(stderr, "Error Connecting to service\n");
+                    char errorMsg[] = "Unable to connect, try again;";
+                    bufferevent_write(proxyPair->b_client, &errorMsg, sizeof(errorMsg));
+                    bufferevent_free(proxyPair->b_client);
+                    bufferevent_free(proxyPair->b_service);
+                return;
+                }
+                bufferevent_setcb(proxyPair->b_service, proxyReadCB, NULL, eventCB, currentServPack);
+                bufferevent_enable(proxyPair->b_service, EV_READ|EV_WRITE);
+    
+                // add pair of buffer events to clientList for this service
+                proxyPair->next = currService->clientList;
+                currService->clientList = proxyPair;
+            } 
+        }
         currService = currService->next;
     }
 }

@@ -6,10 +6,10 @@ portal-proxy: portal-proxy.o portal-proxy.h proxy.o proxy.h setup.o setup.h
 portal-proxy.o: portal-proxy.c portal-proxy.h
 	gcc -c portal-proxy.c
 
-proxy.o: proxy.c proxy.h
+proxy.o: proxy.c setup.h proxy.h portal-proxy.h
 	gcc -c proxy.c 
 
-setup.o: setup.c setup.h
+setup.o: setup.c proxy.h setup.h portal-proxy.h
 	gcc -c setup.c 
 
 run: portal-proxy
