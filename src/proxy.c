@@ -1,4 +1,5 @@
-#include "porxy.h"
+#include "portal-proxy.h"
+#include "proxy.h"
 
 /* Call back for information comming in from the monitor, in the buffer info. Function 
 * should recive a c-string that contains the name of the service and the ip address and 
@@ -6,7 +7,7 @@
 * Call back will verify is the right service, and store the address including port num
 * in the serv member of the service struct, and then if the address is new will terminate
 * all clients connected and free memory. */
-static void monitorReadCB(struct bufferevent *bev, void *servList){
+void monitorReadCB (struct bufferevent *bev, void *servList){
     service *currentServ = (service *) servList;
     struct evbuffer *input = bufferevent_get_input(bev);
     int len, i, j, k;
@@ -57,7 +58,7 @@ static void monitorReadCB(struct bufferevent *bev, void *servList){
 
 /* when triggered by a connecting client determines which service the client was connecting
 * for and connects them to the appropiate service. */
-static void clientConnectCB(struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *ctx){ 
+void clientConnectCB (struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *ctx){ 
     service *currService;
     currService = (service *) ctx;
     servicePack *currentServPack; 
@@ -131,7 +132,7 @@ static void clientConnectCB(struct evconnlistener *listener, evutil_socket_t fd,
 /* Call back for information comming in from either a client or the service they are connected
 * to, function passes the info through. If the service is not there will attempt to 
 * reconnect and send the info. */
-static void proxyReadCB(struct bufferevent *bev, void *srvPck) { 
+void proxyReadCB (struct bufferevent *bev, void *srvPck) { 
     servicePack *servPack = (servicePack *) srvPck;
     servCliPair *curPair = servPack->pair;
     struct bufferevent *partner = NULL;
@@ -174,7 +175,7 @@ static void proxyReadCB(struct bufferevent *bev, void *srvPck) {
 
 
 /* triggered by all event buffer event, reports errors and successful connects. */
-static void eventCB(struct bufferevent *bev, short what, void *ctx){ 
+void eventCB (struct bufferevent *bev, short what, void *ctx){ 
     if (what & BEV_EVENT_ERROR) {
         unsigned long err;
         while ((err = (bufferevent_get_openssl_error(bev)))) { printf("1\n");
@@ -199,7 +200,7 @@ static void eventCB(struct bufferevent *bev, short what, void *ctx){
 }
 
 /* catches interrupt signal and allows the program to cleanup before exiting. */
-static void signalCB(evutil_socket_t sig, short events, void *user_data) {
+void signalCB (evutil_socket_t sig, short events, void *user_data) {
     struct event_base *base = (struct event_base *) user_data;
     struct timeval delay = { 2, 0 };
 
@@ -211,7 +212,7 @@ static void signalCB(evutil_socket_t sig, short events, void *user_data) {
 
 /* goes through the list of services, frees the listeners associated with that
 * service */
-void freeAllListeners(service *servList) {
+void freeAllListeners (service *servList) {
     while (servList != NULL) {
         evconnlistener_free(servList->listener);
         servList = servList->next;
@@ -219,7 +220,7 @@ void freeAllListeners(service *servList) {
 }
 
 /* goes through the list of services, frees memory allocated for each node */
-void freeAllServiceNodes(service *servList){
+void freeAllServiceNodes (service *servList){
     service *tempServ = servList;
     servCliPair *tempPair = NULL;
 

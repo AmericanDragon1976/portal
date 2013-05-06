@@ -6,28 +6,50 @@
 
 #ifndef SETUP_H
 #define SETUP_H
-#include "portal-proxy.h"
-#include "structs.h"
+#include <stdio.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <stdbool.h>
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+#include <event2/bufferevent_ssl.h>
+#include <event2/bufferevent.h>
+#include <event2/buffer.h>
+#include <event2/listener.h>
+#include <event2/util.h>
+
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/rand.h>
 
 /* prints to screen proper syntax for running the program, then exits */
-static void usage ();
+void usage ();
+
+/* returns the length of the config file. There is a good probility that 
+* the file will contain 0's and so strlen() can not be used to determine 
+* the length of the char array once it is read in. */
+int getConfigFileLen(char *name);
 
 /*  Read a file, Recive name of file with length of 100, and long var (len) by referance
 * return pointer to c string (buffer) holding contents of the file, int will now contain
 * length of the of the buffer. len needs set so that the info is avaliable later. */
-static char* readFile (char *name, long *len);
+char* readFile (char *name, int len);
 
 /* recives a service pointer to buffer containing config file
 * returns pointer that is the head of a list of services. */
-static service* parseConfigFile (char *buffer, long fileSize);
+service* parseConfigFile (char *buffer, int fileSize);
 
 /* goes through list of services and for each service:
 *   connects to monitor
 *   requests service addr */
-static void initServices (struct event_base *eBase, service *servList);
+void initServices (struct event_base *eBase, service *servList);
 
 /* goes through the list of services, creats a listener to accept new clients
 * for each service in the list */
-static void initServiceListeners (struct event_base *eBase, service *servList);
+void initServiceListeners (struct event_base *eBase, service *servList);
 
 #endif

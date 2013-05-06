@@ -1,10 +1,11 @@
 #include "portal-proxy.h"
 #include "setup.h"
+#include "proxy.h"
 
 /* called by toEvent every time it times out. They body is commented out
 because its current use is for testing some aspects and it may be removed 
 from the final product. */
-static void timeoutCB(evutil_socket_t fd, short what, void *arg) { 
+void timeoutCB(evutil_socket_t fd, short what, void *arg) { 
 /*  service *test = (service *) arg;
     bufferevent_write(test->b_monitor, test->name, sizeof(test->name));
     printf("timeoutCB called\n");
@@ -18,11 +19,11 @@ int main(int argc, char **argv) {
     service *serviceList = NULL;
     char fileName[100];
     FILE *filePointer;
-    long fileSize;
+    int fileSize;
     char *fileBuffer;
     size_t result;
     struct event_base *base;
-    struct event *signal_event;
+    struct event *signalEvent;
 
     if (argc <3)
         usage();
@@ -40,31 +41,25 @@ have been set at the end of the for loop. */
             usage();
     }
 
-// read config.txt, parse, and creat linked list of services
     strcpy(fileName, argv[2]);
-    fileBuffer = readFile(fileName, &fileSize);
+    fileSize = getConfigFileLen(fileName);
+    fileBuffer = readFile(fileName, fileSize);
     serviceList = parseConfigFile(fileBuffer, fileSize);    
     free(fileBuffer);
  
-// create event base
     base = event_base_new();
 
-// connect to monitors
     initServices(base, serviceList);
-
-// create listeners to accept clients for each service
     initServiceListeners(base, serviceList); 
 
-struct timeval five_seconds;
-five_seconds.tv_sec = 5;
-five_seconds.tv_usec = 0;
-struct event *toEvent; // time out event do this ever so often
-toEvent = event_new(base, -1, EV_PERSIST, timeoutCB, serviceList);
-event_add(toEvent, &five_seconds);
+    // This time out event only needed for testing, can be removed in final version
+    struct timeval five_seconds = {5, 0};
+    struct event *toEvent; 
+    toEvent = event_new(base, -1, EV_PERSIST, timeoutCB, serviceList);
+    event_add(toEvent, &five_seconds);
 
-// create listener to handle proper shutdown in case of interrupt signal
-    signal_event = evsignal_new(base, SIGINT, signalCB, (void *) base);
-    if (!signal_event || event_add(signal_event, NULL) < 0) {
+    signalEvent = evsignal_new(base, SIGINT, signalCB, (void *) base);
+    if (!signalEvent || event_add(signalEvent, NULL) < 0) {
         fprintf(stderr, "Could not create/add signal event.\n");
         exit(0);
     }

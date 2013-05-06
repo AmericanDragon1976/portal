@@ -1,7 +1,9 @@
+#include "portal-proxy.h"
 #include "setup.h"
+#include "proxy.h"
 
 /* prints to screen proper syntax for running the program, then exits */
-static void usage(){
+void usage(){
     printf("Usage is as follows: \n");
     printf("    portal-proxy space seperated flags /path/to/config/file\n");
     printf("Example: \n");
@@ -9,10 +11,32 @@ static void usage(){
     exit(0);
 }
 
+/* returns the length of the config file. There is a good probility that 
+* the file will contain 0's and so strlen() can not be used to determine 
+* the length of the char array once it is read in. */
+int getConfigFileLen(char *name) {
+    int fileLen = 0;
+    int nameLength = 100;
+    char *buffer;
+    FILE *filePtr;
+
+    filePtr = fopen(name, "r");
+    if (filePtr == NULL) {
+        fprintf(stderr, "Unable to open config file. chech file name and path!\n");
+        exit(0);
+    }
+
+    fseek(filePtr, 0, SEEK_END);
+    fileLen = ftell(filePtr);
+    fclose(filePtr);
+
+    return fileLen;
+}
+
 /*  Read a file, Recive name of file with length of 100, and long var (len) by referance
 * return pointer to c string (buffer) holding contents of the file, int will now contain
 * length of the of the buffer. len needs set so that the info is avaliable later. */
-static char* readFile(char *name, long *len){
+char* readFile(char *name, int len){
     int nameLength = 100;
     char *buffer;
     FILE *filePtr;
@@ -24,16 +48,13 @@ static char* readFile(char *name, long *len){
         exit(0);
     }
 
-    fseek(filePtr, 0, SEEK_END);
-    *len = ftell(filePtr);
-    rewind(filePtr);
-    buffer = (char *) malloc(sizeof(char)*(*len));
+    buffer = (char *) malloc(sizeof(char) * (len));
     if (buffer == NULL) {
         fprintf(stderr, "Memory Error, creation of File Buffer Failed!\n");
         exit(0);
     }
-    result = fread(buffer, 1, *len, filePtr);
-    if (result != *len) {
+    result = fread(buffer, 1, len, filePtr);
+    if (result != len) {
         fprintf(stderr, "Error reading file.\n");
         exit(0);
     }
@@ -43,7 +64,7 @@ static char* readFile(char *name, long *len){
 
 /* recives a service pointer to buffer containing config file
 * returns pointer that is the head of a list of services. */
-static service* parseConfigFile(char *buff, long len){
+service* parseConfigFile(char *buff, int len){
     service *listHead = (service *) calloc(1, sizeof(service));
     listHead->next = NULL;
     listHead->clientList = NULL;
@@ -93,7 +114,7 @@ static service* parseConfigFile(char *buff, long len){
 /* goes through list of services and for each service:
 *   connects to monitor
 *   requests service addr */
-static void initServices(struct event_base *eBase, service *serviceList) {
+void initServices(struct event_base *eBase, service *serviceList) {
     service *servList = (service *) serviceList;
     struct addrinfo *server;
     struct addrinfo hints = {};
@@ -147,7 +168,7 @@ static void initServices(struct event_base *eBase, service *serviceList) {
 
 /* goes through the list of services, creats a listener to accept new clients
 * for each service in the list */
-static void initServiceListeners(struct event_base *eBase, service *servList) {
+void initServiceListeners(struct event_base *eBase, service *servList) {
     int portno;
     struct sockaddr_in serv_addr;
     struct in_addr *inp;
