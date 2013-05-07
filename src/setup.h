@@ -50,7 +50,10 @@ service* parseConfigFile (char *buffer, int fileSize);
 
 /* allocates memory for a new service node and inicilizes all pointer members to null 
 * returns a pointer to this new node */
-service* newServiceNode ();
+service* newNullServiceNode ();
+/* allocates memory for a new wervice node and inicilizes all pointer menters to the 
+* values passed in via parameters */
+service* newServiceNode (service *nxt, struct evconnlistener *lstnr, struct bufferevent *bevm, servCliPair *scp);
 
 /* goes through list of services and for each service:
 *   connects to monitor

@@ -62,8 +62,7 @@ void monitorReadCB (struct bufferevent *bev, void *servList){
 void clientConnectCB (struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *ctx){ 
     service *currService;
     currService = (service *) ctx;
-    servicePack *currentServPack; 
-    currentServPack = (servicePack *) malloc(sizeof(servicePack));
+    servicePack *currentServPack = NULL; 
     struct event_base *base = evconnlistener_get_base(listener);
     struct addrinfo hints = {};
     struct addrinfo *servAddr;
@@ -72,13 +71,12 @@ void clientConnectCB (struct evconnlistener *listener, evutil_socket_t fd, struc
     while (currService != NULL) { 
         if(currService->listener == listener) {
             // create a new Service Client Pair and add it to the Client List
-            servCliPair *proxyPair = newServCliPair(NULL, NULL, NULL);
-            currentServPack->serv = currService; 
+            servCliPair *proxyPair = newNullServCliPair();
 
             // create event buffers to proxy client
             proxyPair->bClient =  bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
             proxyPair->bService = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
-            currentServPack->pair = proxyPair;
+            currentServPack = newServicePackage(currService, proxyPair);
             int i = 0; 
             int j = 0; 
             bool portNow = false;
@@ -198,6 +196,17 @@ void signalCB (evutil_socket_t sig, short events, void *user_data) {
     event_base_loopexit(base, &delay);
 }
 
+/* allocates memeory for a new servCliPair and sets their members inicial values to NULL*/
+servCliPair* newNullServCliPair () {
+    servCliPair *nwPair = (servCliPair *) malloc(sizeof(servCliPair));
+    nwPair->bClient = NULL;
+    nwPair->bService = NULL;
+    nwPair->next = NULL;
+
+    return nwPair;
+}
+
+
 /* allocates memeory for a new servCliPair and sets their members inicial values */
 servCliPair* newServCliPair (struct bufferevent *client, struct bufferevent *service, servCliPair *nxt) {
     servCliPair *nwPair = (servCliPair *) malloc(sizeof(servCliPair));
@@ -206,6 +215,26 @@ servCliPair* newServCliPair (struct bufferevent *client, struct bufferevent *ser
     nwPair->next = nxt;
 
     return nwPair;
+}
+
+/* allocates memory for a new servicePackage sets all pointers to NULL and returns a pointer to the new
+* servicePackage */
+servicePack* newNullServicePackage() {
+    servicePack* nwServ = (servicePack *) malloc(sizeof(servicePack));
+    nwServ->serv = NULL;
+    nwServ->pair = NULL;
+
+    return nwServ;
+}
+
+/* allocates memory for a new servicePackage sets all pointers to the values passed in by parameters and
+* returns a pointer to the new servicePackage */
+servicePack* newServicePackage(service *srvs, servCliPair *par) {
+    servicePack* nwServ = (servicePack *) malloc(sizeof(servicePack));
+    nwServ->serv = srvs;
+    nwServ->pair = par;
+
+    return nwServ;
 }
 
 /* goes through the list of services, frees the listeners associated with that

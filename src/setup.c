@@ -52,7 +52,7 @@ int getConfigFileLen(char *name) {
 * length of the of the buffer. len needs set so that the info is avaliable later. */
 char* readFile(char *name, int len){
     int nameLength = 100;
-    char *buffer;
+    char *buffer = (char *) malloc(sizeof(char) * (len));
     FILE *filePtr;
     size_t result;
 
@@ -62,7 +62,6 @@ char* readFile(char *name, int len){
         exit(0);
     }
 
-    buffer = (char *) malloc(sizeof(char) * (len));
     if (buffer == NULL) {
         fprintf(stderr, "Memory Error, creation of File Buffer Failed!\n");
         exit(0);
@@ -78,7 +77,7 @@ char* readFile(char *name, int len){
 
 /* allocates memory for a new service node and inicilizes all pointer members to null 
 * returns a pointer to this new node */
-service* newServiceNode () {
+service* newNullServiceNode () {
     service *nwNode = (service *) calloc(1, sizeof(service));
     nwNode->next = NULL;
     nwNode->listener = NULL;
@@ -88,10 +87,22 @@ service* newServiceNode () {
     return nwNode;
 }
 
+/* allocates memory for a new wervice node and inicilizes all pointer menters to the 
+* values passed in via parameters */
+service* newServiceNode (service *nxt, struct evconnlistener *lstnr, struct bufferevent *bevm, servCliPair *scp) {
+    service *nwNode = (service *) calloc(1, sizeof(service));
+    nwNode->next = nxt;
+    nwNode->listener = lstnr;
+    nwNode->bMonitor = bevm;
+    nwNode->clientList = scp;
+
+    return nwNode;
+}
+
 /* recives a service pointer to buffer containing config file
 * returns pointer that is the head of a list of services. */
 service* parseConfigFile(char *buff, int len){
-    service *listHead = newServiceNode();
+    service *listHead = newNullServiceNode();
     service *currentRecord = listHead;
     char serIdent[] = "service";
     int j = 0;
@@ -124,7 +135,7 @@ service* parseConfigFile(char *buff, int len){
         currentRecord->monitor[j] = '\0';
 
         if (i < len){
-            currentRecord->next = newServiceNode();
+            currentRecord->next = newNullServiceNode();
             currentRecord = currentRecord->next;
             for (; buff[i++] != 's';);              // advance to next record
             i--;

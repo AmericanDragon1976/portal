@@ -45,8 +45,17 @@ void eventCB (struct bufferevent *bev, short what, void *ctx);
 /* catches interrupt signal and allows the program to cleanup before exiting. */
 void signalCB (evutil_socket_t sig, short events, void *user_data);
 
-/* allocates memeory for a new servCliPair and sets their members inicial values */
+/* allocates memeory for a new servCliPair and sets their members inicial values to NULL*/
+servCliPair* newNullServCliPair ();
+/* allocates memeory for a new servCliPair and sets their members inicial values as supplied by caller */
 servCliPair* newServCliPair (struct bufferevent *client, struct bufferevent *service, servCliPair *nxt);
+
+/* allocates memory for a new servicePackage sets all pointers to NULL and returns a pointer to the new
+* servicePackage */
+servicePack* newNullServicePackage();
+/* allocates memory for a new servicePackage sets all pointers to the values passed in by parameters and
+* returns a pointer to the new servicePackage */
+servicePack* newServicePackage(service *srvs, servCliPair *par);
 
 /* goes through the list of services, frees the listeners associated with that
 * service */
