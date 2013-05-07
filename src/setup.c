@@ -47,7 +47,7 @@ int getConfigFileLen(char *name) {
     return fileLen;
 }
 
-/*  Read a file, Recive name of file with length of 100, and long var (len) by referance
+/*  Read a file, Recive name of file with length of 100, and int var (len) by referance
 * return pointer to c string (buffer) holding contents of the file, int will now contain
 * length of the of the buffer. len needs set so that the info is avaliable later. */
 char* readFile(char *name, int len){
@@ -76,12 +76,22 @@ char* readFile(char *name, int len){
     return buffer;
 }
 
+/* allocates memory for a new service node and inicilizes all pointer members to null 
+* returns a pointer to this new node */
+service* newServiceNode () {
+    service *nwNode = (service *) calloc(1, sizeof(service));
+    nwNode->next = NULL;
+    nwNode->listener = NULL;
+    nwNode->bMonitor = NULL;
+    nwNode->clientList = NULL;
+
+    return nwNode;
+}
+
 /* recives a service pointer to buffer containing config file
 * returns pointer that is the head of a list of services. */
 service* parseConfigFile(char *buff, int len){
-    service *listHead = (service *) calloc(1, sizeof(service));
-    listHead->next = NULL;
-    listHead->clientList = NULL;
+    service *listHead = newServiceNode();
     service *currentRecord = listHead;
     char serIdent[] = "service";
     int j = 0;
@@ -114,10 +124,8 @@ service* parseConfigFile(char *buff, int len){
         currentRecord->monitor[j] = '\0';
 
         if (i < len){
-            currentRecord->next = (service *) calloc(1, sizeof(service));
+            currentRecord->next = newServiceNode();
             currentRecord = currentRecord->next;
-            currentRecord->next = NULL;
-            currentRecord->clientList = NULL;
             for (; buff[i++] != 's';);              // advance to next record
             i--;
         }
@@ -152,14 +160,14 @@ void initServices(struct event_base *eBase, service *serviceList) {
             } 
             // create a bufferevent to listen to monitor, connect to monitor and send service name
             // as a request for current ip address and port for that service
-            servList->b_monitor = bufferevent_socket_new(eBase, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST); 
-            bufferevent_setcb(servList->b_monitor, monitorReadCB, NULL, eventCB, serviceList); 
-            if(bufferevent_socket_connect(servList->b_monitor, server->ai_addr, server->ai_addrlen) != 0) { 
+            servList->bMonitor = bufferevent_socket_new(eBase, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST); 
+            bufferevent_setcb(servList->bMonitor, monitorReadCB, NULL, eventCB, serviceList); 
+            if(bufferevent_socket_connect(servList->bMonitor, server->ai_addr, server->ai_addrlen) != 0) { 
                 fprintf(stderr, "Error connecting to monitor\n"); 
-                bufferevent_free(servList->b_monitor); 
+                bufferevent_free(servList->bMonitor); 
             } 
-            bufferevent_enable(servList->b_monitor, EV_READ|EV_WRITE);
-            bufferevent_write(servList->b_monitor, servList->name, sizeof(servList->name));
+            bufferevent_enable(servList->bMonitor, EV_READ|EV_WRITE);
+            bufferevent_write(servList->bMonitor, servList->name, sizeof(servList->name));
         }
         servList = servList->next;
     }

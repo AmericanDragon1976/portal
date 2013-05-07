@@ -7,7 +7,7 @@ because its current use is for testing some aspects and it may be removed
 from the final product. */
 void timeoutCB(evutil_socket_t fd, short what, void *arg) { 
 /*  service *test = (service *) arg;
-    bufferevent_write(test->b_monitor, test->name, sizeof(test->name));
+    bufferevent_write(test->bMonitor, test->name, sizeof(test->name));
     printf("timeoutCB called\n");
     printf("Server up\n");
 */}

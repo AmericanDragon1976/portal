@@ -48,6 +48,10 @@ char* readFile (char *name, int len);
 * returns pointer that is the head of a list of services. */
 service* parseConfigFile (char *buffer, int fileSize);
 
+/* allocates memory for a new service node and inicilizes all pointer members to null 
+* returns a pointer to this new node */
+service* newServiceNode ();
+
 /* goes through list of services and for each service:
 *   connects to monitor
 *   requests service addr */

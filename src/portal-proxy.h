@@ -26,7 +26,7 @@
 /* Keeps referances to the incoming connection from a clinent and the outgoing 
 * connection that proxys that client to the correct service. */
 typedef struct serviceClientPair {
-    struct bufferevent *b_client, *b_service;
+    struct bufferevent *bClient, *bService;
     struct serviceClientPair *next;
 } servCliPair;
 
@@ -40,7 +40,7 @@ typedef struct service {
     char monitor[22];   // connect to monitor programm at the address
     char serv[22];      // address to connect service to
     struct evconnlistener *listener;
-    struct bufferevent *b_monitor;
+    struct bufferevent *bMonitor;
     servCliPair *clientList;
 } service;
 

@@ -15,7 +15,7 @@ void monitorReadCB (struct bufferevent *bev, void *servList){
     bool nowAddr = false;
     char *text, tempName[30], tempAddr[22];
 
-    while(currentServ != NULL && currentServ->b_monitor != bev)
+    while(currentServ != NULL && currentServ->bMonitor != bev)
         currentServ = currentServ->next;
 
     // obtain data from buffer event 
@@ -47,8 +47,8 @@ void monitorReadCB (struct bufferevent *bev, void *servList){
             servCliPair *temp = currentServ->clientList;
             while(currentServ->clientList != NULL){
                 currentServ->clientList = temp->next;
-                bufferevent_free(temp->b_client);
-                bufferevent_free(temp->b_service);
+                bufferevent_free(temp->bClient);
+                bufferevent_free(temp->bService);
                 free(temp);
             }
         }
@@ -72,16 +72,12 @@ void clientConnectCB (struct evconnlistener *listener, evutil_socket_t fd, struc
     while (currService != NULL) { 
         if(currService->listener == listener) {
             // create a new Service Client Pair and add it to the Client List
-            servCliPair *proxyPair = (servCliPair *) malloc(sizeof(servCliPair));
-            proxyPair->b_client = NULL;
-            proxyPair->b_service = NULL;
-            proxyPair->next = NULL;
-
+            servCliPair *proxyPair = newServCliPair(NULL, NULL, NULL);
             currentServPack->serv = currService; 
 
             // create event buffers to proxy client
-            proxyPair->b_client =  bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
-            proxyPair->b_service = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
+            proxyPair->bClient =  bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
+            proxyPair->bService = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
             currentServPack->pair = proxyPair;
             int i = 0; 
             int j = 0; 
@@ -99,18 +95,18 @@ void clientConnectCB (struct evconnlistener *listener, evutil_socket_t fd, struc
                     fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(i));
                     return;
                 }
-                bufferevent_setcb(proxyPair->b_client, proxyReadCB, NULL, eventCB, currentServPack); 
-                bufferevent_enable(proxyPair->b_client, EV_READ|EV_WRITE);
-                if (bufferevent_socket_connect(proxyPair->b_service, servAddr->ai_addr, servAddr->ai_addrlen) != 0) { 
+                bufferevent_setcb(proxyPair->bClient, proxyReadCB, NULL, eventCB, currentServPack); 
+                bufferevent_enable(proxyPair->bClient, EV_READ|EV_WRITE);
+                if (bufferevent_socket_connect(proxyPair->bService, servAddr->ai_addr, servAddr->ai_addrlen) != 0) { 
                     fprintf(stderr, "Error Connecting to service\n");
                     char errorMsg[] = "Unable to connect, try again;";
-                    bufferevent_write(proxyPair->b_client, &errorMsg, sizeof(errorMsg));
-                    bufferevent_free(proxyPair->b_client);
-                    bufferevent_free(proxyPair->b_service);
+                    bufferevent_write(proxyPair->bClient, &errorMsg, sizeof(errorMsg));
+                    bufferevent_free(proxyPair->bClient);
+                    bufferevent_free(proxyPair->bService);
                 return;
                 }
-                bufferevent_setcb(proxyPair->b_service, proxyReadCB, NULL, eventCB, currentServPack);
-                bufferevent_enable(proxyPair->b_service, EV_READ|EV_WRITE);
+                bufferevent_setcb(proxyPair->bService, proxyReadCB, NULL, eventCB, currentServPack);
+                bufferevent_enable(proxyPair->bService, EV_READ|EV_WRITE);
     
                 // add pair of buffer events to clientList for this service
                 proxyPair->next = currService->clientList;
@@ -131,18 +127,18 @@ void proxyReadCB (struct bufferevent *bev, void *srvPck) {
     struct evbuffer *src, *dst;
 
     src = bufferevent_get_input(bev); 
-    if(bev == curPair->b_service)
-        partner = curPair->b_client;
+    if(bev == curPair->bService)
+        partner = curPair->bClient;
     else 
-        partner = curPair->b_service;
+        partner = curPair->bService;
 
     if(!partner){ 
 // no partner free the bufferevents free associated memory and remove pair from clientListand return 
         servCliPair *temp = servPack->serv->clientList;
         if (temp = servPack->pair) {        // the trigger buffer is part of the first client service pair in the list
             servPack->serv->clientList = temp->next;
-            bufferevent_free(temp->b_client);
-            bufferevent_free(temp->b_service);
+            bufferevent_free(temp->bClient);
+            bufferevent_free(temp->bService);
             free(temp);
             return;
         }
@@ -151,8 +147,8 @@ void proxyReadCB (struct bufferevent *bev, void *srvPck) {
                 curPair = temp;
                 temp = temp->next;
                 curPair->next = temp->next;
-                bufferevent_free(temp->b_client);
-                bufferevent_free(temp->b_service);
+                bufferevent_free(temp->bClient);
+                bufferevent_free(temp->bService);
                 free(temp);
                 return;
             }
@@ -200,6 +196,16 @@ void signalCB (evutil_socket_t sig, short events, void *user_data) {
 
 
     event_base_loopexit(base, &delay);
+}
+
+/* allocates memeory for a new servCliPair and sets their members inicial values */
+servCliPair* newServCliPair (struct bufferevent *client, struct bufferevent *service, servCliPair *nxt) {
+    servCliPair *nwPair = (servCliPair *) malloc(sizeof(servCliPair));
+    nwPair->bClient = client;
+    nwPair->bService = service;
+    nwPair->next = nxt;
+
+    return nwPair;
 }
 
 /* goes through the list of services, frees the listeners associated with that
