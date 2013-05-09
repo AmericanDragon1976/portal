@@ -15,14 +15,18 @@ void monitorReadCB (struct bufferevent *bev, void *servList){
     bool nowAddr = false;
     char *text, tempName[30], tempAddr[22];
 
-    while(currentServ != NULL && currentServ->bMonitor != bev)
-        currentServ = currentServ->next;
-
     // obtain data from buffer event 
     len = evbuffer_get_length(input);
     text = (char *) malloc(len);
     bzero(text, len); 
     evbuffer_remove(input, text, len); 
+
+    while(currentServ != NULL && currentServ->bMonitor != bev)
+        currentServ = currentServ->next;
+
+    if (strcmp(text, "service not found")) {
+        fprintf(stderr, "Service %s not found!!\n", currentServ->name)
+    }
 
     // parse out name of service, verify correct one, and store the rest in currentServ->serv
     j = 0; k = 0;
