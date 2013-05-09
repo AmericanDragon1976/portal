@@ -22,6 +22,8 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
+/*                STRUCTS                 */
+
 
 /* Keeps referances to the incoming connection from a clinent and the outgoing 
 * connection that proxys that client to the correct service. */

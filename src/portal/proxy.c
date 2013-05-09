@@ -1,5 +1,5 @@
 #include "portal-proxy.h"
-#include "setup.h"
+#include "proxySetup.h"
 #include "proxy.h"
 
 /* Call back for information comming in from the monitor, in the buffer info. Function 
@@ -24,9 +24,8 @@ void monitorReadCB (struct bufferevent *bev, void *servList){
     while(currentServ != NULL && currentServ->bMonitor != bev)
         currentServ = currentServ->next;
 
-    if (strcmp(text, "service not found")) {
-        fprintf(stderr, "Service %s not found!!\n", currentServ->name)
-    }
+    if (!strcmp(text, "service not found")) 
+        fprintf(stderr, "Service %s not found!!\n", currentServ->name);
 
     // parse out name of service, verify correct one, and store the rest in currentServ->serv
     j = 0; k = 0;

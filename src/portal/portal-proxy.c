@@ -1,5 +1,5 @@
 #include "portal-proxy.h"
-#include "setup.h"
+#include "proxySetup.h"
 #include "proxy.h"
 
 /* called by toEvent every time it times out. They body is commented out
@@ -16,11 +16,11 @@ int main(int argc, char **argv) {
     int i = 0;
     service *serviceList = NULL;
     char fileName[100];
-    FILE *filePointer;
+    FILE *filePointer = NULL;
     int fileSize;
-    char *fileBuffer, **cmdArgs;
-    struct event_base *base;
-    struct event *signalEvent;
+    char *fileBuffer = NULL, **cmdArgs = NULL;
+    struct event_base *base = NULL;
+    struct event *signalEvent = NULL;
 
     /* Currently -C flag is required but has no effect, if  others are
     * added later to change behavior change the verfyComndlnArgs() function 

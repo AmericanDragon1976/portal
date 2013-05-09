@@ -20,16 +20,21 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
-// service struct
-	// name
-	// agent address
-	// proxy list - linked list of proxies for this service (usually only one)
-	// next 
+/*                STRUCTS                 */
 
-// struct proxy
-	// bufferevent for  the service being proxied
-	// last address sent
-	// next 
+typedef struct proxy {
+	struct bufferevent *bProxy;
+	struct proxy *next;
+} proxy;
 
-// general function prototypes 
+typedef struct monitorService {
+	char name [30];
+	char agentAddr[22];
+	char proxyAddr[22];
+	struct evconnlistener *listener;
+	proxy *proxyList;
+	struct monitorService *next;
+} moniServ;
+
+/*                   PRTOTYPES                 */
 #endif

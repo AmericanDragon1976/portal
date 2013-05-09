@@ -1,16 +1,16 @@
 LD_LIBRARY_PATH="/Users/edward/workspace/libevent-2.0.21-stable/" "/usr/local/Cellar/openssl"
 
-src/portal/portal: src/portal/portal-proxy.o src/portal/proxy.o src/portal/proxySetup.o 
-	deps/libevent-2.0.21-stable/libtool --mode=link gcc -o src/portal/portal src/portal/portal-proxy.o src/portal/proxy.o src/portal/proxySetup.o deps/libevent-2.0.21-stable/libevent.la deps/libevent-2.0.21-stable/libevent_openssl.la -lssl -lcrypto 
+portal/portal: portal/portal-proxy.o portal/proxy.o portal/proxySetup.o 
+	../deps/libevent-2.0.21-stable/libtool --mode=link gcc -o portal/portal portal/portal-proxy.o portal/proxy.o portal/proxySetup.o ../deps/libevent-2.0.21-stable/libevent.la ../deps/libevent-2.0.21-stable/libevent_openssl.la -lssl -lcrypto 
 
-src/portal/portal-proxy.o: src/portal/portal-proxy.c src/portal/portal-proxy.h src/portal/proxySetup.h src/portal/proxy.h
-	gcc -c portal/portal-proxy.c
+portal-proxy.o: portal/portal-proxy.c portal/portal-proxy.h portal/proxySetup.h portal/proxy.h
+	gcc -c portal/portal-proxy.c 
 
-src/portal/proxy.o: src/portal/proxy.c src/portal/proxySetup.h src/portal/proxy.h src/portal/portal-proxy.h
-	gcc -c src/portal/proxy.c 
+proxy.o: portal/proxy.c portal/proxySetup.h portal/proxy.h portal/portal-proxy.h
+	gcc -c portal/proxy.c 
 
-src/portal/proxySetup.o: src/portal/proxySetup.c src/portal/proxy.h src/portal/proxySetup.h src/portal/portal-proxy.h
-	gcc -c src/portal/setup.c 
+proxySetup.o: portal/proxySetup.c portal/proxy.h portal/proxySetup.h portal/portal-proxy.h
+	gcc -c portal/proxySetup.c 
 
 run: portal
-	./src/portal/portal
+	./portal/portal
