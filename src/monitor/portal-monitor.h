@@ -22,9 +22,9 @@
 
 /*                STRUCTS                 */
 
-typedef struct proxy {
+typedef struct prxy {
 	struct bufferevent *bProxy;
-	struct proxy *next;
+	struct prxy *next;																																													
 } proxy;
 
 typedef struct monitorService {

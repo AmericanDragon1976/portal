@@ -1,21 +1,24 @@
 #include "portal-monitor.h"
 #include "portal-monitor.h"
+#include "monitor.h"
+#include "monitorSetup.h"
 
 int main (int argc, char **argv) {
     moniServ *serviceList = NULL;
     char fileName[100];
     char *fileBuffer = NULL, **cmdArgs = NULL;
     FILE *filePtr = NULL;
-    int filesize;
+    int fileSize;
 
     cmdArgs = argv;
-    if (!verifyComndArgs(argc, cmdArgs)) 
-         /* use defaults */ ;
-    else {
-        strcpy(filename, cmdArgs[1])
-        filesize = getConfigFileLen(filename);
-        fileBuffer = readFile(filename, filesize);
+    if (verifyComndArgs(argc, cmdArgs)) {
+        strcpy(fileName, cmdArgs[1]);
+        fileSize = getConfigFileLen(fileName);
+        fileBuffer = readFile(fileName, fileSize);
         serviceList = parseConfigFile(fileBuffer, fileSize);
+    }
+    else {
+         /* use defaults */ ;
     }
 
         // connect to the agent(s) for the serivce(s) being monitored 
