@@ -69,4 +69,7 @@ bool parseAddress(char *addrToParse, char *ipAddr, char* portNum);
 * for each service in the list */
 void initServiceListeners (struct event_base *eBase, service *servList);
 
+/* sets the information in in and addrinfo structure to be used as the critera for stuctrue passed into getaddrinfo() */
+struct addrinfo* setCriteriaAddrinfo ();
+
 #endif

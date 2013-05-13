@@ -67,8 +67,8 @@ void clientConnectCB (struct evconnlistener *listener, evutil_socket_t fd, struc
     currService = (service *) ctx;
     servicePack *currentServPack = NULL; 
     struct event_base *base = evconnlistener_get_base(listener);
-    struct addrinfo hints = {};
-    struct addrinfo *servAddr;
+    struct addrinfo *hints = NULL;
+    struct addrinfo *servAddr = NULL;
     char ipAddr[16] = {'\0'}, portNum[6] = {'\0'};
 
     while (currService != NULL) { 
@@ -87,11 +87,8 @@ void clientConnectCB (struct evconnlistener *listener, evutil_socket_t fd, struc
             if (!parseAddress(currService->serv, ipAddr, portNum))
                 fprintf(stderr, "Bad address unable to connect client to %s\n", currService->name);
             else {
-                hints.ai_family = AF_INET;
-                hints.ai_socktype = SOCK_STREAM;
-                hints.ai_flags = 0;
-                hints.ai_protocol = 0; 
-                i = getaddrinfo(ipAddr, portNum, &hints, &servAddr);
+                hints = setCriteriaAddrinfo (); 
+                i = getaddrinfo(ipAddr, portNum, hints, &servAddr);
                 if (i != 0) {
                     fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(i));
                     return;

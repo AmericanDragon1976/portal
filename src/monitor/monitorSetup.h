@@ -43,7 +43,7 @@ moniServ* parseConfigFile (char *buff, int len);
 /* creates a new instance of a moniServ struct with all pointers inicilized to NULL */
 moniServ* newNullMoniServNode ();
 /* creates a new instance of moniServe struct with pointers set to the passed in values */
-moniServ* newMoniServNode (struct evconnlistener* lstnr, moniServ* service, struct bufferevent *bevProxy, stuct bufferevent *bevAgent);
+moniServ* newMoniServNode (struct evconnlistener* lstnr, moniServ* service, struct bufferevent *bevProxy, struct bufferevent *bevAgent);
 
 /* Takes an adrress in the form a.b.c.d:portnumber and parses it storing the ip
 * address and port number in the approiate char arrays, addrToParse[22], ipAddr[16] 
@@ -51,5 +51,12 @@ moniServ* newMoniServNode (struct evconnlistener* lstnr, moniServ* service, stru
 bool parseAddress(char *addrToParse, char *ipAddr, char* portNum);
 
 /* Connects to the agent for each service */
-contactAgents(struct event_base *base, moniServ *sList);
+void contactAgents(struct event_base *base, moniServ *sList);
+
+/* creates a listener for each servics to listen for the proxys and establish the buffer events for them at that time */
+void listenForProxys(struct event_base *base, moniServ *sList);
+
+/* sets the information in in and addrinfo structure to be used as the critera for stuctrue passed into getaddrinfo() */
+struct addrinfo* setCriteriaAddrinfo ();
+
 #endif 

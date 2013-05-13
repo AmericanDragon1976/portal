@@ -149,8 +149,8 @@ service* parseConfigFile(char *buff, int len){
 *   requests service addr */
 void initServices(struct event_base *eBase, service *serviceList) {
     service *servList = (service *) serviceList;
-    struct addrinfo *server;
-    struct addrinfo hints = {};
+    struct addrinfo *server = NULL;
+    struct addrinfo *hints = NULL;
 
     while (servList != NULL) {
         char ipAddr[16], portNum[6];
@@ -160,11 +160,8 @@ void initServices(struct event_base *eBase, service *serviceList) {
         if (!parseAddress(servList->monitor, ipAddr, portNum))
             fprintf(stderr, "Bad address unable to connect to monitor for %s\n", servList->name);
         else {
-            hints.ai_family = AF_INET;
-            hints.ai_socktype = SOCK_STREAM;
-            hints.ai_flags = 0;
-            hints.ai_protocol = 0; 
-            i = getaddrinfo(ipAddr, portNum, &hints, &server); 
+            hints =  setCriteriaAddrinfo ();
+            i = getaddrinfo(ipAddr, portNum, hints, &server); 
             if (i != 0){                                                         
                 fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(i));
                 servList = servList->next;
@@ -245,4 +242,13 @@ void initServiceListeners(struct event_base *eBase, service *servList) {
     }
 }
 
+/* sets the information in in and addrinfo structure to be used as the critera for stuctrue passed into getaddrinfo() */
+struct addrinfo* setCriteriaAddrinfo () {
+    struct addrinfo *hints = (struct addrinfo *) malloc(sizeof(struct addrinfo));
+    hints->ai_family = AF_INET;
+    hints->ai_socktype = SOCK_STREAM;
+    hints->ai_flags = 0;
+    hints->ai_protocol = 0;
 
+    return hints;
+}

@@ -116,7 +116,7 @@ moniServ* newNullMoniServNode() {
     return nwMoniServ;
 }
 /* creates a new instance of moniServe struct with pointers set to the passed in values */
-moniServ* newMoniServNode (struct evconnlistener* lstnr, moniServ* service, struct bufferevent *bevProxy, stuct bufferevent *bevAgent) {
+moniServ* newMoniServNode (struct evconnlistener* lstnr, moniServ* service, struct bufferevent *bevProxy, struct bufferevent *bevAgent) {
     moniServ *nwMoniServ = (moniServ *) malloc(sizeof(moniServ));
     nwMoniServ->listener = lstnr;
     nwMoniServ->next = service;
@@ -155,23 +155,20 @@ bool parseAddress (char *addrToParse, char *ipAddr, char* portNum) {
 }
 
 /* Connects to the agent for each service */
-contactAgents (struct event_base *base, moniServ *sList) {
+void contactAgents (struct event_base *base, moniServ *sList) {
     moniServ *currServ = sList;
-    struct addrinfo *agentServer;
-    struct addrinfo hints = {};
+    struct addrinfo *agentServer = NULL;
+    struct addrinfo *hints = NULL;
 
     while (currServ != NULL) {
-        char *agentIP[16], *agentPort[6]; 
+        char agentIP[16], agentPort[6]; 
         int i = 0;
         int j = 0;
         if (!parseAddress(currServ->agentAddr, agentIP, agentPort)) 
             fprintf(stderr, "Bad address unable to connect to agent for %s\n", currServ->name);
         else {
-            hints.ai_family = AF_INET;
-            hints.ai_socktype = SOCK_STREAM;
-            hints.ai_flags = 0;
-            hints.ai_protocol = 0; 
-            i = getAddrInfo(agentIP, agentPort, &hints, &agentServer);
+            hints = setCriteriaAddrinfo();
+            i = getaddrinfo(agentIP, agentPort, hints, &agentServer);
             if (i != 0) {
                 fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(i));
                 currServ = currServ->next;
@@ -179,18 +176,31 @@ contactAgents (struct event_base *base, moniServ *sList) {
             }
 
             currServ->bAgent = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
-            bufferevent_setcb(currServ->bAgent, NULL, NULL, NULL, *sList)       //add actuall call back functions in place of NULL as they are written (read, write, event)
+            bufferevent_setcb(currServ->bAgent, NULL, NULL, NULL, sList);       //add actuall call back functions in place of NULL as they are written (read, write, event)
             if(bufferevent_socket_connect(currServ->bAgent, agentServer->ai_addr, agentServer->ai_addrlen) != 0) { 
                 fprintf(stderr, "Error connecting to agent\n"); 
                 bufferevent_free(currServ->bAgent);
             } 
             bufferevent_enable(currServ->bAgent, EV_READ|EV_WRITE);
-            bufferevent_write(currServ->bAgent, currSerf->name, sizeof(currServ->name));
+            bufferevent_write(currServ->bAgent, currServ->name, sizeof(currServ->name));
         }
         currServ = currServ->next;
     }
+    return;
 }
 
-        // connect to the agent(s) for the serivce(s) being monitored 
+/* creates a listener for each servics to listen for the proxys and establish the buffer events for them at that time */
+void listenForProxys(struct event_base *base, moniServ *sList){}
+
+/* sets the information in in and addrinfo structure to be used as the critera for stuctrue passed into getaddrinfo() */
+struct addrinfo* setCriteriaAddrinfo () {
+    struct addrinfo *hints = (struct addrinfo *) malloc(sizeof(struct addrinfo));
+    hints->ai_family = AF_INET;
+    hints->ai_socktype = SOCK_STREAM;
+    hints->ai_flags = 0;
+    hints->ai_protocol = 0;
+
+    return hints;
+}
         // get current address for service(s) being monitored from the agent(s)
         // establish listener(s) for proxy agent(s) 
