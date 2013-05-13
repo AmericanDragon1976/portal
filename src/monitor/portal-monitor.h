@@ -22,17 +22,13 @@
 
 /*                STRUCTS                 */
 
-typedef struct prxy {
-	struct bufferevent *bProxy;
-	struct prxy *next;																																													
-} proxy;
-
 typedef struct monitorService {
 	char name [30];
-	char agentAddr[22];
-	char proxyAddr[22];
+	char agentAddr[22]; 		// connect to agent on this address
+	char proxyAddr[22];			// listen for porxy on this address
 	struct evconnlistener *listener;
-	proxy *proxyList;
+	struct bufferevent *bProxy;
+	struct bufferevent *bAgent;
 	struct monitorService *next;
 } moniServ;
 

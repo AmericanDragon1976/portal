@@ -23,10 +23,5 @@
 /*                   PRTOTYPES                 */
 
 
-/* creates a new instance of the struct proxy with all pointers inicilized to NULL*/
-proxy* newNullProxy ();
-/* creates a new instance of the struct proxy with pointers set to passed in value*/
-proxy* newProxy (struct bufferevent* bevProxy, proxy* nxt);
-
 
 #endif 

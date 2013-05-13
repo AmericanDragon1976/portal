@@ -109,20 +109,88 @@ moniServ* parseConfigFile(char *buff, int len) { /* TODO: parse the file and cre
 moniServ* newNullMoniServNode() {
     moniServ *nwMoniServ = (moniServ *) malloc(sizeof(moniServ));
     nwMoniServ->listener = NULL;
-    nwMoniServ->proxyList = NULL;
     nwMoniServ->next = NULL;
+    nwMoniServ->bProxy = NULL;
+    nwMoniServ->bAgent = NULL;
 
     return nwMoniServ;
 }
 /* creates a new instance of moniServe struct with pointers set to the passed in values */
-moniServ* newMoniServNode(struct evconnlistener* lstnr, proxy* prxyLst, moniServ* service) {
+moniServ* newMoniServNode (struct evconnlistener* lstnr, moniServ* service, struct bufferevent *bevProxy, stuct bufferevent *bevAgent) {
     moniServ *nwMoniServ = (moniServ *) malloc(sizeof(moniServ));
     nwMoniServ->listener = lstnr;
-    nwMoniServ->proxyList = prxyLst;
     nwMoniServ->next = service;
+    nwMoniServ->bProxy = bevProxy;
+    nwMoniServ->bAgent = bevAgent;
 
     return nwMoniServ;
 }
+
+/* Takes an adrress in the form a.b.c.d:portnumber and parses it storing the ip
+* address and port number in the approiate char arrays, addrToParse[22], ipAddr[16] 
+* and portNum[6], returns true if successful otherwise returns false */
+bool parseAddress (char *addrToParse, char *ipAddr, char* portNum) {
+    int i, j;
+    j = 0;
+    bool portNow = false;
+
+    if ( addrToParse == NULL)
+        return portNow;
+
+    for (i = 0; i < 22; ){
+        if (addrToParse[i] == ':') {
+            i++;
+            ipAddr[j] = '\0';
+            portNow = true; 
+            j = 0;
+        }
+        if (portNow == false)
+            ipAddr[j++] = addrToParse[i++];
+        else 
+            portNum[j++] = addrToParse[i++];
+    }
+    portNum[j] = '\0';
+
+    return portNow;
+}
+
+/* Connects to the agent for each service */
+contactAgents (struct event_base *base, moniServ *sList) {
+    moniServ *currServ = sList;
+    struct addrinfo *agentServer;
+    struct addrinfo hints = {};
+
+    while (currServ != NULL) {
+        char *agentIP[16], *agentPort[6]; 
+        int i = 0;
+        int j = 0;
+        if (!parseAddress(currServ->agentAddr, agentIP, agentPort)) 
+            fprintf(stderr, "Bad address unable to connect to agent for %s\n", currServ->name);
+        else {
+            hints.ai_family = AF_INET;
+            hints.ai_socktype = SOCK_STREAM;
+            hints.ai_flags = 0;
+            hints.ai_protocol = 0; 
+            i = getAddrInfo(agentIP, agentPort, &hints, &agentServer);
+            if (i != 0) {
+                fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(i));
+                currServ = currServ->next;
+                continue;
+            }
+
+            currServ->bAgent = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
+            bufferevent_setcb(currServ->bAgent, NULL, NULL, NULL, *sList)       //add actuall call back functions in place of NULL as they are written (read, write, event)
+            if(bufferevent_socket_connect(currServ->bAgent, agentServer->ai_addr, agentServer->ai_addrlen) != 0) { 
+                fprintf(stderr, "Error connecting to agent\n"); 
+                bufferevent_free(currServ->bAgent);
+            } 
+            bufferevent_enable(currServ->bAgent, EV_READ|EV_WRITE);
+            bufferevent_write(currServ->bAgent, currSerf->name, sizeof(currServ->name));
+        }
+        currServ = currServ->next;
+    }
+}
+
         // connect to the agent(s) for the serivce(s) being monitored 
         // get current address for service(s) being monitored from the agent(s)
         // establish listener(s) for proxy agent(s) 

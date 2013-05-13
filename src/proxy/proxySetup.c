@@ -167,7 +167,8 @@ void initServices(struct event_base *eBase, service *serviceList) {
             i = getaddrinfo(ipAddr, portNum, &hints, &server); 
             if (i != 0){                                                         
                 fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(i));
-                exit(0);
+                servList = servList->next;
+                continue;
             } 
             // create a bufferevent to listen to monitor, connect to monitor and send service name
             // as a request for current ip address and port for that service

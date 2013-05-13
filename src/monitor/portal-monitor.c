@@ -9,6 +9,7 @@ int main (int argc, char **argv) {
     char *fileBuffer = NULL, **cmdArgs = NULL;
     FILE *filePtr = NULL;
     int fileSize;
+    struct event_base *base = NULL;
 
     cmdArgs = argv;
     if (verifyComndArgs(argc, cmdArgs)) {
@@ -21,9 +22,13 @@ int main (int argc, char **argv) {
          /* use defaults */ ;
     }
 
+    base = event_base_new();
+    contactAgents(base, serviceList);
+
         // connect to the agent(s) for the serivce(s) being monitored 
-        // get current address for service(s) being monitored from the agent(s)
         // establish listener(s) for proxy agent(s) 
+        // get current address for service(s) being monitored from the agent(s)
+        // establish listeners for proxys 
     
     // Monitoring activity 
         // respond to proxy(s) that are requesting inicial data,
