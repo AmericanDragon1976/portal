@@ -22,46 +22,85 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
-/* Call back for information comming in from the monitor, in the buffer info. Function 
-* should recive a c-string that contains the name of the service and the ip address and 
-* port number in the format a.b.c.d:portnum.
-* Call back will verify is the right service, and store the address including port num
-* in the serv member of the service struct, and then if the address is new will terminate
-* all clients connected and free memory. */
-void monitorReadCB (struct bufferevent *bev, void *serv);
+/* 
+ * Call back for information comming in from the monitor, in the buffer info. Function 
+ * should recive a c-string that contains the name of the service and the ip address and 
+ * port number in the format a.b.c.d:port_num.
+ * Call back will verify is the right service, and store the address including port num
+ * in the serv member of the service struct, and then if the address is new will terminate
+ * all clients connected and free memory. 
+ */
+void 
+monitor_read_cb(struct bufferevent *bev, void *serv);
 
-/* when triggered by a connecting client determines which service the client was connecting
-* for and connects them to the appropiate service. */
-void clientConnectCB (struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *ctx);
+/* 
+ * when triggered by a connecting client determines which service the client was connecting
+ * for and connects them to the appropiate service. 
+ */
+void 
+client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, 
+    struct sockaddr *address, int socklen, void *ctx);
 
-/* Call back for information comming in from either a client or the service they are connected
-* to, function passes the info through. If the service is not there will attempt to 
-* reconnect and send the info. */
-void proxyReadCB (struct bufferevent *bev, void *srvPck);
+/* 
+ * Call back for information comming in from either a client or the service they are connected
+ * to, function passes the info through. If the service is not there will attempt to 
+ * reconnect and send the info. 
+ */
+void 
+proxy_read_cb(struct bufferevent *bev, void *srv_pck);
 
-/* triggered by all event buffer event, reports errors and successful connects. */
-void eventCB (struct bufferevent *bev, short what, void *ctx);
+/* 
+ * triggered by all event buffer event, reports errors and successful connects. 
+ */
+void 
+event_cb(struct bufferevent *bev, short what, void *ctx);
 
-/* catches interrupt signal and allows the program to cleanup before exiting. */
-void signalCB (evutil_socket_t sig, short events, void *user_data);
+/* 
+ * Catches interrupt signals and allows the program to cleanup before exiting. 
+ */
+void 
+signal_cb(evutil_socket_t sig, short events, void *user_data);
 
-/* allocates memeory for a new servCliPair and sets their members inicial values to NULL*/
-servCliPair* newNullServCliPair ();
-/* allocates memeory for a new servCliPair and sets their members inicial values as supplied by caller */
-servCliPair* newServCliPair (struct bufferevent *client, struct bufferevent *service, servCliPair *nxt);
+/*  
+ * Allocates memeory for a new serv_cli_pair and sets their pointer members 
+ * inicial values to NULL.
+ */
+serv_cli_pair* 
+new_null_serv_cli_pair();
 
-/* allocates memory for a new servicePackage sets all pointers to NULL and returns a pointer to the new
-* servicePackage */
-servicePack* newNullServicePackage();
-/* allocates memory for a new servicePackage sets all pointers to the values passed in by parameters and
-* returns a pointer to the new servicePackage */
-servicePack* newServicePackage(service *srvs, servCliPair *par);
+/* 
+ * allocates memeory for a new serv_cli_pair and sets their members inicial 
+ * values as supplied by caller 
+ */
+serv_cli_pair* 
+new_serv_cli_pair(struct bufferevent *client, struct bufferevent *service, 
+    serv_cli_pair *nxt);
 
-/* goes through the list of services, frees the listeners associated with that
-* service */
-void freeAllListeners (service *servList);
+/* 
+ * allocates memory for a new service_package sets all pointers to NULL and 
+ * returns a pointer to the new service_package 
+ */
+service_pack* 
+new_null_service_package();
 
-/* goes through the list of services, frees memory allocated for each node */
-void freeAllServiceNodes (service *servList);
+/* 
+ * allocates memory for a new service_package sets all pointers to the values 
+ * passed in by parameters and returns a pointer to the new service_package 
+ */
+service_pack* 
+new_service_package(service *srvs, serv_cli_pair *par);
+
+/* 
+ * goes through the list of services, frees the listeners associated with that
+ * service 
+ */
+void 
+free_all_listeners (service *serv_list);
+
+/* 
+ * goes through the list of services, frees memory allocated for each node 
+ */
+void 
+free_all_service_nodes (service *serv_list);
 
 #endif

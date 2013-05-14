@@ -10,6 +10,8 @@ int main (int argc, char **argv) {
     FILE *filePtr = NULL;
     int fileSize;
     struct event_base *base = NULL;
+    struct event *signalEvent = NULL;
+    struct event *toEvent;     // TODO: use to query agents on status of service on a timer.
 
     cmdArgs = argv;
     if (verifyComndArgs(argc, cmdArgs)) {
@@ -24,8 +26,9 @@ int main (int argc, char **argv) {
 
     base = event_base_new();
     contactAgents(base, serviceList);
+    listenForProxys(base, serviceList);
 
-        // connect to the agent(s) for the serivce(s) being monitored 
+        // TODO: call backs for agent event buffer, & body of listenForProxys()
         // establish listener(s) for proxy agent(s) 
         // get current address for service(s) being monitored from the agent(s)
         // establish listeners for proxys 
