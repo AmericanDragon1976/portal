@@ -22,7 +22,7 @@ main(int argc, char **argv)
 {
     int                 i = 0;
     service             *service_list = NULL;
-    char                file_name[100];
+    char                file_name[file_nm_len];
     FILE                *filePointer = NULL;
     int                 file_size;
     char                *file_buffer = NULL, **cmd_args = NULL;
@@ -39,7 +39,7 @@ main(int argc, char **argv)
     if (!verify_comnd_ln_args(argc, cmd_args))
         usage();
 
-    strcpy(file_name, argv[2]);
+    strcpy(file_name, argv[argc - 1]);
     file_size = get_config_file_len(file_name);
     file_buffer = read_file(file_name, file_size);
     service_list = parse_config_file(file_buffer, file_size);    

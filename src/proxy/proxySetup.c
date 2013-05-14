@@ -12,12 +12,12 @@ verify_comnd_ln_args(int argc, char **argv)
 {
 
     if (argc < 3)         
-        return false;
+        return (false);
 
     if (strcmp(argv[1], "-C") != 0) // if other flags added or effect of -C flag changes alter here. 
-        return false;
+        return (false);
 
-    return true;
+    return (true);
 }
 
 /* 
@@ -42,22 +42,21 @@ usage()
 int 
 get_config_file_len(char *name) 
 {
-    int     fileLen = 0;
-    int     nameLength = 100;
+    int     file_len = 0;
     char    *buffer;
-    FILE    *filePtr;
+    FILE    *file_ptr;
 
-    filePtr = fopen(name, "r");
-    if (filePtr == NULL) {
+    file_ptr = fopen(name, "r");
+    if (file_ptr == NULL) {
         fprintf(stderr, "Unable to open config file. chech file name and path!\n");
         exit(0);
     }
 
-    fseek(filePtr, 0, SEEK_END);
-    fileLen = ftell(filePtr);
-    fclose(filePtr);
+    fseek(file_ptr, 0, SEEK_END);
+    file_len = ftell(file_ptr);
+    fclose(file_ptr);
 
-    return fileLen;
+    return (file_len);
 }
 
 /* 
@@ -67,13 +66,12 @@ get_config_file_len(char *name)
 char* 
 read_file(char *name, int len)
 {
-    int     nameLength = 100;
     char    *buffer = (char *) malloc(sizeof(char) * (len));
-    FILE    *filePtr;
+    FILE    *file_ptr;
     size_t  result;
 
-    filePtr = fopen(name, "r");
-    if (filePtr == NULL) {
+    file_ptr = fopen(name, "r");
+    if (file_ptr == NULL) {
         fprintf(stderr, "Unable to open file, check file name and path!\n");
         exit(0);
     }
@@ -82,12 +80,12 @@ read_file(char *name, int len)
         fprintf(stderr, "Memory Error, creation of File Buffer Failed!\n");
         exit(0);
     }
-    result = fread(buffer, 1, len, filePtr);
+    result = fread(buffer, 1, len, file_ptr);
     if (result != len) {
         fprintf(stderr, "Error reading file.\n");
         exit(0);
     }
-    fclose(filePtr);
+    fclose(file_ptr);
     return buffer;
 }
 
@@ -98,14 +96,14 @@ read_file(char *name, int len)
 service* 
 new_null_service_node() 
 {
-    service     *nwNode = (service *) calloc(1, sizeof(service));
+    service     *nw_node = (service *) calloc(1, sizeof(service));
 
-    nwNode->next = NULL;
-    nwNode->listener = NULL;
-    nwNode->b_monitor = NULL;
-    nwNode->client_list = NULL;
+    nw_node->next = NULL;
+    nw_node->listener = NULL;
+    nw_node->b_monitor = NULL;
+    nw_node->client_list = NULL;
 
-    return nwNode;
+    return (nw_node);
 }
 
 /* 
@@ -117,14 +115,14 @@ service*
 new_service_node(service *nxt, struct evconnlistener *lstnr, 
                struct bufferevent *bevm, serv_cli_pair *scp) 
 {
-    service     *nwNode = (service *) calloc(1, sizeof(service));
+    service     *nw_node = (service *) calloc(1, sizeof(service));
 
-    nwNode->next = nxt;
-    nwNode->listener = lstnr;
-    nwNode->b_monitor = bevm;
-    nwNode->client_list = scp;
+    nw_node->next = nxt;
+    nw_node->listener = lstnr;
+    nw_node->b_monitor = bevm;
+    nw_node->client_list = scp;
 
-    return nwNode;
+    return nw_node;
 }
 
 /* 
@@ -134,8 +132,8 @@ new_service_node(service *nxt, struct evconnlistener *lstnr,
 service* 
 parse_config_file(char *buff, int len)
 {
-    service     *listHead = new_null_service_node();
-    service     *currentRecord = listHead;
+    service     *list_head = new_null_service_node();
+    service     *current_record = list_head;
     char        serIdent[] = "service";
 
     int j = 0;
@@ -155,9 +153,9 @@ parse_config_file(char *buff, int len)
         j = 0;
 
         while (buff[i] != '\n') 
-            currentRecord->name[j++] = buff[i++];   // read service name
+            current_record->name[j++] = buff[i++];   // read service name
 
-        currentRecord->name[j] = '\0';
+        current_record->name[j] = '\0';
         i++;                                        // disgard \n
 
         for (; buff[i++] != 'n';);                  // find end of identifier "listen"
@@ -166,9 +164,9 @@ parse_config_file(char *buff, int len)
         j = 0;
 
         while (buff[i] != '\n')
-            currentRecord->listen[j++] = buff[i++]; // read listen address
+            current_record->listen[j++] = buff[i++]; // read listen address
 
-        currentRecord->listen[j] = '\0';
+        current_record->listen[j] = '\0';
 
         for (;buff[i++] != 'r';)                    // find end of identifier "monitor"
             ;                   
@@ -176,21 +174,21 @@ parse_config_file(char *buff, int len)
         j = 0;
 
         while (i < len && buff[i] != '\n')
-            currentRecord->monitor[j++] = buff[i++];// read monitor address
+            current_record->monitor[j++] = buff[i++];// read monitor address
 
-        currentRecord->monitor[j] = '\0';
+        current_record->monitor[j] = '\0';
 
         if (i < len){
-            currentRecord->next = new_null_service_node();
+            current_record->next = new_null_service_node();
 
-            currentRecord = currentRecord->next;
+            current_record = current_record->next;
             for (; buff[i++] != 's';)              // advance to next record
                 ;
 
             i--;
         }
     }
-    return listHead;
+    return list_head;
 }
 
 /* 
@@ -253,7 +251,7 @@ parse_address(char *addrToParse, char *ip_addr, char* port_num)
     if ( addrToParse == NULL)
         return port_now;
 
-    for (i = 0; i < 22; ){
+    for (i = 0; i < comp_add_len; ){
         if (addrToParse[i] == ':') {
             i++;
             ip_addr[j] = '\0';
@@ -284,7 +282,7 @@ init_service_listeners(struct event_base *eBase, service *serv_list)
     struct in_addr      *inp = (struct in_addr *) malloc (sizeof(struct in_addr));
 
     while (serv_list != NULL) {
-        char ip_addr[16], port_num[6];
+        char ip_addr[ip_len], port_num[port_len];
         bool port_now = false;
         int i = 0; 
         int j = 0; 
@@ -294,7 +292,7 @@ init_service_listeners(struct event_base *eBase, service *serv_list)
         else {
             port_no = atoi(port_num);
             i = inet_aton(ip_addr, inp); 
-            memset(&serv_addr,0, sizeof(serv_addr));
+            memset(&serv_addr, 0, sizeof(serv_addr));
             serv_addr.sin_family = AF_INET;
             serv_addr.sin_addr.s_addr = (*inp).s_addr; 
             serv_addr.sin_port = htons(port_no); 

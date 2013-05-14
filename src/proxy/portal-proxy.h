@@ -1,4 +1,4 @@
-/* Runs the event loop. the corrensponding .c file is the function main.*/
+/* Runs the event loop. The corrensponding .c file has the function main.*/
 
 #ifndef PORTALPROXY_H
 #define PORTALPROXY_H
@@ -22,13 +22,19 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
+#define serv_nm_siz     30      // length of all char arrays holding service names
+#define comp_add_len    22      // length of char arrays holding address a.d.c.e:portnum
+#define file_nm_len     100     // length of file names
+#define ip_len          16      // length of ip portion of address
+#define port_len        6       // length of port number portion of address
+
 /* 
  * Keeps referances to the incoming connection from a clinent and the outgoing 
  * connection that proxys that client to the correct service. 
  */
 typedef struct service_client_pair {
-    struct bufferevent *b_client, *b_service;
-    struct service_client_pair *next;
+    struct bufferevent          *b_client, *b_service;
+    struct service_client_pair  *next;
 } serv_cli_pair;
 
 /* 
@@ -37,14 +43,14 @@ typedef struct service_client_pair {
  * services. This struct is used for each node in the list. 
  */
 typedef struct service {
-    char name[30];
-    struct service *next;
-    char listen[22];    // listen for clients on this address
-    char monitor[22];   // connect to monitor programm at the address
-    char serv[22];      // address to connect service to
-    struct evconnlistener *listener;
-    struct bufferevent *b_monitor;
-    serv_cli_pair *client_list;
+    char                    name[serv_nm_siz];
+    struct                  service *next;
+    char                    listen[comp_add_len];    // listen for clients on this address
+    char                    monitor[comp_add_len];   // connect to monitor programm at the address
+    char                    serv[comp_add_len];      // address to connect service to
+    struct evconnlistener   *listener;
+    struct bufferevent      *b_monitor;
+    serv_cli_pair           *client_list;
 } service;
 
 /* 
@@ -55,8 +61,8 @@ typedef struct service {
  * caused a callback to be called. 
  */
 typedef struct service_package {
-    service *serv;
-    serv_cli_pair *pair;
+    service         *serv;
+    serv_cli_pair   *pair;
 } service_pack;
 
 #endif

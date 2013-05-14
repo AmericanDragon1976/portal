@@ -9,22 +9,24 @@
 bool 
 verify_comnd_args(int argc, char **argv) 
 {
-    if (argc < 2)
+    if (argc < 3)
         return (false);
-    else 
-        return (true);
+
+    if (strcmp(argv[1], "-C") != 0) // if other flags added or effect of -C flag changes alter here. 
+        return (false);
+
+    return (true);
 }
 
 /* 
- * returns the length of the config file. There is a good probility that 
+ * Returns the length of the config file. There is a good probility that 
  * the file will contain 0's and so strlen() can not be used to determine 
  * the length of the char array once it is read in. 
  */
 int 
 get_config_file_len(char *name) 
 {
-    int     fileLen = 0;
-    int     nameLength = 100;
+    int     file_len = 0;
     char    *buffer;
     FILE    *file_ptr;
 
@@ -36,21 +38,19 @@ get_config_file_len(char *name)
     }
 
     fseek(file_ptr, 0, SEEK_END);
-    fileLen = ftell(file_ptr);
+    file_len = ftell(file_ptr);
     fclose(file_ptr);
 
-    return (fileLen);
+    return (file_len);
 }
 
 /* 
- * Read a file, Recive name of file with length of <= 100, and int var (len) by referance
- * return pointer to c string (buffer) holding contents of the file, int will now contain
- * length of the of the buffer. len needs set so that the info is avaliable later. 
+ * Read a file, Recive name of file and length. 
+ * Return pointer to char array (buffer) holding contents of the file. 
  */
 char* 
 read_file(char *name, int len)
 {
-    int     nameLength = 100;
     char    *buffer = (char *) malloc(sizeof(char) * (len));
     FILE    *file_ptr;
     size_t  result;
@@ -192,7 +192,7 @@ parse_address (char *addr_to_parse, char *ip_addr, char* port_num)
     if ( addr_to_parse == NULL)
         return (port_now);
 
-    for (i = 0; i < 22; ){
+    for (i = 0; i < comp_add_len; ){
         if (addr_to_parse[i] == ':') {
             i++;
             ip_addr[j] = '\0';
@@ -220,7 +220,7 @@ contact_agents (struct event_base *base, moni_serv *s_list)
     struct addrinfo     *hints = NULL;
 
     while (curr_serv != NULL) {
-        char    agent_ip[16], agent_port[6]; 
+        char    agent_ip[ip_len], agent_port[port_len]; 
         int     i = 0;
         int     j = 0;
 
@@ -259,7 +259,7 @@ contact_agents (struct event_base *base, moni_serv *s_list)
 void 
 listen_for_proxys(struct event_base *base, moni_serv *s_list)
 {
-
+    // TODO: create listener for each service and begin listening for proxys. First contact from a proxy is request for info.
 }
 
 /*

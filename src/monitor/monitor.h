@@ -1,5 +1,6 @@
 #ifndef MONITOR_H
 #define MONITOR_H
+
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -20,9 +21,8 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
-/*                   PRTOTYPES                 */
 
-// TODO: agentReadCB()
-// TODO: agentEventCB()
+// TODO: agent_read_cb()
+// TODO: agent_event_cb()
 
 #endif 
