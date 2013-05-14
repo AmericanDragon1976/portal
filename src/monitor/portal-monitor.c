@@ -1,34 +1,36 @@
 #include "portal-monitor.h"
-#include "portal-monitor.h"
 #include "monitor.h"
 #include "monitorSetup.h"
 
-int main (int argc, char **argv) {
-    moniServ *serviceList = NULL;
-    char fileName[100];
-    char *fileBuffer = NULL, **cmdArgs = NULL;
-    FILE *filePtr = NULL;
-    int fileSize;
-    struct event_base *base = NULL;
-    struct event *signalEvent = NULL;
-    struct event *toEvent;     // TODO: use to query agents on status of service on a timer.
+int 
+main (int argc, char **argv) 
+{
+    moni_serv           *service_list = NULL;
+    char                file_name[100];
+    char                *file_buffer = NULL, **cmd_args = NULL;
+    FILE                *file_ptr = NULL;
+    int                 file_size;
+    struct event_base   *base = NULL;
+    struct event        *signal_event = NULL;
+    struct event        *to_event;     // TODO: use to query agents on status of service on a timer.
 
-    cmdArgs = argv;
-    if (verifyComndArgs(argc, cmdArgs)) {
-        strcpy(fileName, cmdArgs[1]);
-        fileSize = getConfigFileLen(fileName);
-        fileBuffer = readFile(fileName, fileSize);
-        serviceList = parseConfigFile(fileBuffer, fileSize);
+    cmd_args = argv;
+
+    if (verify_comnd_args(argc, cmd_args)) {
+        strcpy(file_name, cmd_args[1]);
+        file_size = get_config_file_len(file_name);
+        file_buffer = read_file(file_name, file_size);
+        service_list = parse_config_file(file_buffer, file_size);
     }
     else {
          /* use defaults */ ;
     }
 
     base = event_base_new();
-    contactAgents(base, serviceList);
-    listenForProxys(base, serviceList);
+    contact_agents(base, service_list);
+    listen_for_proxys(base, service_list);
 
-        // TODO: call backs for agent event buffer, & body of listenForProxys()
+        // TODO: call backs for agent event buffer, & body of listen_for_proxys()
         // establish listener(s) for proxy agent(s) 
         // get current address for service(s) being monitored from the agent(s)
         // establish listeners for proxys 

@@ -20,17 +20,15 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
-/*                STRUCTS                 */
 
-typedef struct monitorService {
+typedef struct monitor_service {
 	char name [30];
 	char agentAddr[22]; 		// connect to agent on this address
 	char proxyAddr[22];			// listen for porxy on this address
 	struct evconnlistener *listener;
-	struct bufferevent *bProxy;
-	struct bufferevent *bAgent;
-	struct monitorService *next;
-} moniServ;
+	struct bufferevent *b_proxy;
+	struct bufferevent *b_agent;
+	struct monitor_service *next;
+} moni_serv;
 
-/*                   PRTOTYPES                 */
 #endif
