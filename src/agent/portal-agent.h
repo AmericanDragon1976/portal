@@ -26,16 +26,26 @@
 #define file_nm_len     100     // length of file names
 #define ip_len          16      // length of ip portion of address
 #define port_len        6       // length of port number portion of address
+#define monitor_addr	"127.0.0.1:4000"
 
-typedef stuct command_path_pair {
+typedef struct command_path_pair {
 	struct command_path_pair	*next;
 	char 						*hook;
 	char 						*path;
-} cmd_path_pair;
+} hook_path_pair;
 
 typedef struct service_list {
 	struct service_list 		*next;
-	cmd_path_pair				*cmd_list;
+	hook_path_pair				*cmd_lst;
 } serv_lst;
 
+typedef struct list_of_buffer_events {
+	struct list_or_buffer_events 	*next;
+	struct bufferevent 				*bev;
+} buffer_list;
+
+typedef struct {
+	serv_list 	*s_list;
+	buffer_list *b_list;
+} list_heads;
 #endif

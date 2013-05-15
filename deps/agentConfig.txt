@@ -1,0 +1,11 @@
+service mysql
+  check /path/to/script/for/health/check
+  start /path/to/script/to/start/service
+  stop /path/to/script/to/stop/service
+  restart /path/to/script/to/stop/service
+  reload /path/to/script/to/reload/service
+  start-replication /path/to/script/to/start/replication
+  stop-replication /path/to/script/to/stop/replication
+  restart-replication /path/to/script/to/restart-replication
+  promote /path/to/script/to/promote/service/to/primary
+  demote /path/to/script/to/demote/service/to/secondary

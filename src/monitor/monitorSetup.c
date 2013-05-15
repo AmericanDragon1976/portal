@@ -277,5 +277,18 @@ set_criteria_addrinfo ()
 
     return (hints);
 }
+
+/*
+ * Outputs to the user how to start the program. 
+ */
+void 
+usage()
+{
+    printf("Usage is as follows: \n");
+    printf("    portal-proxy space seperated flags /path/to/config/file\n");
+    printf("Example: \n");
+    printf("    portal-proxy -C ../../deps/config.txt\n");
+    exit(0);
+}
         // get current address for service(s) being monitored from the agent(s)
         // establish listener(s) for proxy agent(s) 

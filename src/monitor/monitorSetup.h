@@ -51,4 +51,7 @@ listen_for_proxys(struct event_base *base, moni_serv *s_list);
 struct addrinfo* 
 set_criteria_addrinfo();
 
-#endif 
+void 
+usage();
+
+#endif

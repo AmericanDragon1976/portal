@@ -58,9 +58,9 @@ bool
 parse_address(char *addrToParse, char *ip_addr, char* port_num);
 
 void 
-init_service_listeners (struct event_base *eBase, service *serv_list);
+init_service_listeners(struct event_base *eBase, service *serv_list);
 
 struct 
-addrinfo* set_criteria_addrinfo ();
+addrinfo* set_criteria_addrinfo();
 
 #endif

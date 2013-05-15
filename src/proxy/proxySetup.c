@@ -29,7 +29,7 @@ usage()
     printf("Usage is as follows: \n");
     printf("    portal-proxy space seperated flags /path/to/config/file\n");
     printf("Example: \n");
-    printf("    portal-proxy -C ../deps/config.txt\n");
+    printf("    portal-proxy -C ../../deps/config.txt\n");
     exit(0);
 }
 
@@ -283,13 +283,10 @@ init_service_listeners(struct event_base *eBase, service *serv_list)
 
     while (serv_list != NULL) {
         char ip_addr[ip_len], port_num[port_len];
-        bool port_now = false;
-        int i = 0; 
-        int j = 0; 
 
-        if (!parse_address(serv_list->listen, ip_addr, port_num))
+        if (!parse_address(serv_list->listen, ip_addr, port_num)) {
             fprintf(stderr, "Bad address unable listen for clients for service %s\n", serv_list->name);
-        else {
+        } else {
             port_no = atoi(port_num);
             i = inet_aton(ip_addr, inp); 
             memset(&serv_addr, 0, sizeof(serv_addr));
