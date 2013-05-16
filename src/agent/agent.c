@@ -18,7 +18,7 @@ monitor_connect_cb(struct evconnlistener *listener, evutil_socket_t fd,
 	bufferevent_setcb(temp_buff_list->bev, read_cb, NULL, event_cb, lists);
 	bufferevent_enable(temp_buff_list->bev, EV_READ|EV_WRITE);
 	temp_buff_list->next = lists->b_list;
-	lists->b_list = &temp_buff_list;
+	lists->b_list = temp_buff_list;
 }
 
 /*

@@ -1,6 +1,9 @@
 #ifndef AGENTSETUP_H
 #define AGENTSETUP_H
 
+bool 
+verify_comnd_ln_args(int argc, char **argv);
+
 int 
 get_config_file_len(char *name);
 
@@ -20,12 +23,11 @@ hook_path_pair*
 new_null_hook_path_pair();
 
 hook_path_pair*
-new_hook_path_pair(hook_path_pair *nxt, char *cmd, char *pth);
+new_hook_path_pair(hook_path_pair *nxt);
 
 void
 listen_for_monitors(struct event_base *base, struct evconnlistener *listner, list_heads *heads);
 
 void 
-usage();
-	
+usage(); 
 #endif

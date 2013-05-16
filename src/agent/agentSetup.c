@@ -7,9 +7,9 @@
  * argumets are supplied and false otherwise. 
  */
 bool 
-verify_comnd_args(int argc, char **argv) 
+verify_comnd_ln_args(int argc, char **argv) 
 {
-    if (argc < 3)
+    if (argc < 3)         
         return (false);
 
     if (strcmp(argv[1], "-C") != 0) // if other flags added or effect of -C flag changes alter here. 
@@ -17,6 +17,7 @@ verify_comnd_args(int argc, char **argv)
 
     return (true);
 }
+
 /* 
  * Returns the length of the config file. There is a good probility that 
  * the file will contain 0's and so strlen() can not be used to determine 
@@ -117,8 +118,6 @@ new_null_hook_path_pair()
     hook_path_pair     *nw_hok_pth_par = (hook_path_pair *) malloc(sizeof(hook_path_pair));
 
     nw_hok_pth_par->next = NULL;
-    nw_hok_pth_par->hook = NULL;
-    nw_hok_pth_par->path = NULL;
 
     return (nw_hok_pth_par);
 }
@@ -128,13 +127,11 @@ new_null_hook_path_pair()
  * value passed in and returns a pointer to it. 
  */
 hook_path_pair*
-new_hook_path_pair(hook_path_pair *nxt, char *cmd, char *pth)
+new_hook_path_pair(hook_path_pair *nxt)
 {
     hook_path_pair     *nw_hok_pth_par = (hook_path_pair *) malloc(sizeof(hook_path_pair));
 
     nw_hok_pth_par->next = nxt;
-    nw_hok_pth_par->hook = cmd;
-    nw_hok_pth_par->path = pth;
 
     return (nw_hok_pth_par);
 }
@@ -147,9 +144,12 @@ new_hook_path_pair(hook_path_pair *nxt, char *cmd, char *pth)
 serv_lst* 
 parse_config_file(char *buff, int len) 
 {
-    serv_lst    *head = new_null_serv_lst();
-    serv_lst    *curr_node = head;
+    serv_lst    *head = NULL; 
+    serv_lst    *curr_node = NULL;
     char        text[file_nm_len] = {};
+    char        hook_nm[hook_len];
+    char        hook_path[file_nm_len];
+    int         i, j;
 
     if(buff == NULL || len < 1){
         fprintf(stderr, "Errer reading config file!!\n");
@@ -157,8 +157,78 @@ parse_config_file(char *buff, int len)
         exit(0);
     }
 
+    j = 0; 
+ 
+    for (i = 0; buff[i] == ' '; i++)                  // advance beyond any leading whitespace
+        ;
 
-	// TODO: parse file and organize data.
+    bzero(&text, file_nm_len);
+
+    while (buff[i++] != ' ')
+        text[j++] = buff[i - 1];            // read in word service
+    text[j] = '\0';
+    i++;
+
+    if (strcmp(text, "service") != 0) { 
+        fprintf(stderr, "fatal error, bad config file.\n");
+        exit(0);  
+    }
+
+    while (i > len) {
+        curr_node = new_null_serv_lst();
+        j = 0;
+       bzero(&text, file_nm_len);
+
+        while (buff[i++] != '\n')
+            text[j++] = buff[i - 1];
+
+        text[j] = '\0';
+        strcpy(curr_node->name, text);
+       bzero(&text, file_nm_len);
+        j = 0; 
+
+        for (; buff[i] != ' '; i++)
+            ;
+
+        while(buff[i++] != ' ')
+            text[j++] = buff[i - 1];
+
+            text[j] = '\0';
+
+        while (strcmp(text, "service") != 0){
+            hook_path_pair *temp_hook_lst = new_null_hook_path_pair();
+
+            strcpy(temp_hook_lst->hook, text);
+            j = 0;
+           bzero(&text, file_nm_len);
+
+            while(buff[i++] != '\n')
+                text[j++] = buff[i -1];
+
+            text[j] = '\0';
+            strcpy(temp_hook_lst->path, text);
+            j = 0;
+            bzero(&text, file_nm_len);
+
+            temp_hook_lst->next = curr_node->cmd_lst;
+            curr_node->cmd_lst = temp_hook_lst;
+
+            if (i < len){
+                for (; buff[i] != ' '; i++)
+                    ;
+
+                while(buff[i++] != ' ')
+                    text[j++] = buff[i -1];
+
+                text[j] = '\0';
+            } else {
+                break;
+            }
+        }
+
+        curr_node->next = head;
+        head = curr_node;
+    }	
 }
 
 /* 
@@ -219,7 +289,7 @@ listen_for_monitors(struct event_base *base, struct evconnlistener *lstnr, list_
         memset(&m_addr, 0, sizeof(m_addr));
         m_addr.sin_family = AF_INET;
         m_addr.sin_addr.s_addr = (*inp).s_addr;
-        m_addr.sin_port = htons()
+        m_addr.sin_port = htons(port_num);
         lstnr = evconnlistener_new_bind(base, monitor_connect_cb, heads, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, 
             -1, (struct sockaddr *) &m_addr, sizeof(m_addr));
 
