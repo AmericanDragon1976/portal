@@ -302,38 +302,39 @@ new_service_package(service *srvs, serv_cli_pair *par)
 }
 
 /* 
- * allocates memory for a new service_package sets all pointers to the values passed in by parameters and
- * returns a pointer to the new service_package 
- */
-void 
-free_all_listeners(service *serv_list) 
-{
-    while (serv_list != NULL) {
-        evconnlistener_free(serv_list->listener);
-        serv_list = serv_list->next;
-    }
-}
-
-/* 
- * goes through the list of services, frees memory allocated for each node 
+ * Recives a pointer to the linked list of services. For each node in the list
+ * frees the monitor buffer, frees the client list, and then frees the node.  
  */
 void 
 free_all_service_nodes(service *serv_list)
 {
-    service         *temp_serv = serv_list;
-    serv_cli_pair   *temp_pair = NULL;
+    service         *temp = serv_list;
 
     while (serv_list != NULL) {
-        serv_list = serv_list->next; 
-
-        while (temp_serv->client_list != NULL){
-            temp_pair = temp_serv->client_list;
-            temp_serv->client_list = temp_pair->next;
-            free(temp_pair); 
+        bufferevent_free(b_monitor);
+        free_pair_list(serv_list->client_list);
+        evconnlistener_free(serv_list->listener);
+        serv_list = serv_list->next;
+        free(temp);
+        temp = serv_list;
         }
-
-        free(temp_serv); 
-        temp_serv = serv_list;
     }
 }
 
+/*
+ * Recives a pointer to a linked list of service client pairs. Frees both 
+ * buffer events and then frees the node, for each node in the linked list. 
+ */
+void 
+free_pair_list(serv_cli_pair *pair)
+{
+    serv_cli_pair   *temp = pair;
+
+    while (pair != NULL){
+        bufferevent_free(pair->b_client);
+        bufferevent_free(pair->b_service);
+        pair = pair->next;
+        free(temp);
+        temp = pair;
+    }
+}

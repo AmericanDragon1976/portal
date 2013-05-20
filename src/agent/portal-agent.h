@@ -28,6 +28,8 @@
 #define port_len        6       // length of port number portion of address
 #define hook_len        40      // largest length allowed for a hook name from agent config file
 #define monitor_addr    "127.0.0.1:4000"
+#define reply_len       500     // largest size for a reply from an executed file. 
+#define no_such_command 404     // the int returned when attempting to execute a hook/command and there is no match to be used.
 
 typedef struct hook_path_pair {
     struct hook_path_pair   *next;

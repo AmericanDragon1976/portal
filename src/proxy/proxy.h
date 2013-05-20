@@ -52,9 +52,8 @@ service_pack*
 new_service_package(service *srvs, serv_cli_pair *par);
 
 void 
-free_all_listeners (service *serv_list);
-
-void 
 free_all_service_nodes (service *serv_list);
 
+void 
+free_pair_list(serv_cli_pair *pair);
 #endif

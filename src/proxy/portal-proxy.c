@@ -64,7 +64,6 @@ main(int argc, char **argv)
     }
 
     event_base_dispatch(base);
-    free_all_listeners(service_list);
     free_all_service_nodes(service_list);
     event_base_free(base);
 }

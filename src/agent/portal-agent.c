@@ -28,12 +28,14 @@ main (int argc, char **argv)
     strcpy(file_name, cmd_args[argc - 1]);
     file_size = get_config_file_len(file_name);
     file_buffer = read_file(file_name, file_size);
-    ser_n_bevs.s_list = parse_config_file(file_buffer, file_size);  // TODO: finish the parse_config_file() function 
+    ser_n_bevs.s_list = parse_config_file(file_buffer, file_size);  
     free(file_buffer);
     
-	// TODO: endlessly listen for updates from the monitor(s)
     base = event_base_new();
     listen_for_monitors(base, listener, &ser_n_bevs);
 
-	// TODO: execute hooks as told by the monitor. 
+    event_base_dispatch(base);
+    evconnlistener_free(listener);
+    free_lists_memory(ser_n_bevs);
+    event_base_free(base);
 }
