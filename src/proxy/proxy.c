@@ -311,13 +311,12 @@ free_all_service_nodes(service *serv_list)
     service         *temp = serv_list;
 
     while (serv_list != NULL) {
-        bufferevent_free(b_monitor);
+        bufferevent_free(serv_list->b_monitor);
         free_pair_list(serv_list->client_list);
         evconnlistener_free(serv_list->listener);
         serv_list = serv_list->next;
         free(temp);
         temp = serv_list;
-        }
     }
 }
 

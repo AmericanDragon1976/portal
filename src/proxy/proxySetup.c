@@ -288,7 +288,7 @@ init_service_listeners(struct event_base *eBase, service *serv_list)
             fprintf(stderr, "Bad address unable listen for clients for service %s\n", serv_list->name);
         } else {
             port_no = atoi(port_num);
-            i = inet_aton(ip_addr, inp); 
+            inet_aton(ip_addr, inp); 
             memset(&serv_addr, 0, sizeof(serv_addr));
             serv_addr.sin_family = AF_INET;
             serv_addr.sin_addr.s_addr = (*inp).s_addr; 
