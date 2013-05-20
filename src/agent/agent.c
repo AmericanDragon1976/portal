@@ -33,9 +33,9 @@ void
 read_cb(struct bufferevent *bev, void *heads)
 {
     struct      evbuffer *input = bufferevent_get_input(bev);
-    char        *text, *serv, *cmd, result[reply_len];
-    serv_lst    *tempService;
-    int         len;
+    char        *text, *serv, *cmd;
+    serv_lst    *temp_service;
+    int         len, result;
     list_heads  *lst_hds = (list_heads *) heads;
 
     len = evbuffer_get_length(input);
@@ -45,8 +45,8 @@ read_cb(struct bufferevent *bev, void *heads)
 
     parse_hook_command(text, serv, cmd, len);
     temp_service = find_service(serv, lst_hds->s_list);
-    srtcpy(result, execute_command(temp_service, cmd), reply_len);
-    bufferevent_write(bufferevent_get_output(bev), &result, reply_len);
+    result = execute_command(temp_service, cmd);
+    bufferevent_write(bev, &result, reply_len);
 }
 
 /*
@@ -83,12 +83,12 @@ parse_hook_command(char *text, char *serv, char* cmd, int len)
  * returns NULL. 
  */
 serv_lst*
-find_service(char* serv, serv_lst *services)
+find_service(char *serv, serv_lst *services)
 {
     serv_lst *curr_serv = services;
 
     while (curr_serv != NULL) {
-        if (strcmp(curr_serv->name, *serv) != 0)
+        if (strcmp(curr_serv->name, serv) != 0)
             curr_serv = curr_serv->next;
         else
             return (curr_serv);
@@ -105,13 +105,13 @@ find_service(char* serv, serv_lst *services)
  int
  execute_command(serv_lst *service, char *cmd)
  {
-    hook_path_pair      *hook_lst = serv_lst->cmd_lst;
+    hook_path_pair      *hook_lst = service->cmd_lst;
 
-    while (cmd_lst != NULL && strcmp(cmd_lst->hook, cmd) != 0)
-        cmd_lst = cmd_lst->next;
+    while (hook_lst != NULL && strcmp(hook_lst->hook, cmd) != 0)
+        hook_lst = hook_lst->next;
 
-    if (cmd_lst != NULL)
-        return (system(cmd_lst->path));
+    if (hook_lst != NULL)
+        return (system(hook_lst->path));
     else 
         return (no_such_command);
  }
@@ -159,8 +159,8 @@ event_cb(struct bufferevent *bev, short what, void *ctx)
 void
 free_lists_memory(list_heads *heads)
 {
-    free_buffers(heads->b_list);
-    free_service_nodes(heads->s_list);
+    free_buffers(heads->b_list); 
+    free_service_nodes(heads->s_list); 
 }
 
 /*
@@ -211,4 +211,19 @@ free_buffers(buffer_list *bevs)
         free(temp);
         temp = bevs;
     }
+}
+
+/* 
+ * catches interrupt signal and allows the program to cleanup before exiting. 
+ */
+void 
+signal_cb (evutil_socket_t sig, short events, void *user_data) 
+{
+    struct event_base   *base = (struct event_base *) user_data;
+    struct timeval      delay = { 2, 0 };
+
+    printf("Caught an interrupt signal; exiting cleanly in two seconds.\n");
+
+
+    event_base_loopexit(base, &delay);
 }

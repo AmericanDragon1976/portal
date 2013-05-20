@@ -86,7 +86,7 @@ read_file(char *name, int len)
         exit(0);
     }
     fclose(file_ptr);
-    return buffer;
+    return (buffer);
 }
 
 /* 

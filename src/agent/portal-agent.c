@@ -2,6 +2,18 @@
 #include "agentSetup.h"
 #include "agent.h"
 
+void print_cmd_lst(serv_lst *list)
+{
+    while (list != NULL){ 
+        hook_path_pair  *temp = list->cmd_lst;
+        while (temp != NULL){ 
+            printf("command: %s, Path: %s\n", temp->hook, temp->path);
+            temp = temp->next;
+        }
+        list = list->next;
+    }
+}
+
 /*
  * main
  */
@@ -28,14 +40,20 @@ main (int argc, char **argv)
     strcpy(file_name, cmd_args[argc - 1]);
     file_size = get_config_file_len(file_name);
     file_buffer = read_file(file_name, file_size);
-    ser_n_bevs.s_list = parse_config_file(file_buffer, file_size);  
+    ser_n_bevs.s_list = parse_config_file(file_buffer, file_size); 
     free(file_buffer);
     
     base = event_base_new();
     listen_for_monitors(base, listener, &ser_n_bevs);
 
+    signal_event = evsignal_new(base, SIGINT, signal_cb, (void *) base);
+    if (!signal_event || event_add(signal_event, NULL) < 0) {
+        fprintf(stderr, "Could not create/add signal event.\n");
+        exit(0);
+    }
+
     event_base_dispatch(base);
-    evconnlistener_free(listener);
-    free_lists_memory(ser_n_bevs);
+//    evconnlistener_free(listener);
+    free_lists_memory(&ser_n_bevs);
     event_base_free(base);
 }

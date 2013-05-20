@@ -167,14 +167,13 @@ parse_config_file(char *buff, int len)
     while (buff[i++] != ' ')
         text[j++] = buff[i - 1];            // read in word service
     text[j] = '\0';
-    i++;
 
     if (strcmp(text, "service") != 0) { 
         fprintf(stderr, "fatal error, bad config file.\n");
         exit(0);  
     }
 
-    while (i > len) {
+    while (i < len) {
         curr_node = new_null_serv_lst();
         j = 0;
        bzero(&text, file_nm_len);
@@ -184,10 +183,10 @@ parse_config_file(char *buff, int len)
 
         text[j] = '\0';
         strcpy(curr_node->name, text);
-       bzero(&text, file_nm_len);
+        bzero(&text, file_nm_len);
         j = 0; 
 
-        for (; buff[i] != ' '; i++)
+        for (; buff[i] == ' '; i++)
             ;
 
         while(buff[i++] != ' ')
@@ -198,15 +197,16 @@ parse_config_file(char *buff, int len)
         while (strcmp(text, "service") != 0){
             hook_path_pair *temp_hook_lst = new_null_hook_path_pair();
 
-            strcpy(temp_hook_lst->hook, text);
+            strcpy(temp_hook_lst->hook, text); 
             j = 0;
            bzero(&text, file_nm_len);
 
-            while(buff[i++] != '\n')
-                text[j++] = buff[i -1];
+            while(i < len && buff[i++] != '\n'){
+                text[j++] = buff[i - 1];
+            } 
 
             text[j] = '\0';
-            strcpy(temp_hook_lst->path, text);
+            strcpy(temp_hook_lst->path, text); 
             j = 0;
             bzero(&text, file_nm_len);
 
@@ -214,7 +214,7 @@ parse_config_file(char *buff, int len)
             curr_node->cmd_lst = temp_hook_lst;
 
             if (i < len){
-                for (; buff[i] != ' '; i++)
+                for (; buff[i] == ' '; i++)
                     ;
 
                 while(buff[i++] != ' ')
@@ -225,10 +225,10 @@ parse_config_file(char *buff, int len)
                 break;
             }
         }
-
         curr_node->next = head;
         head = curr_node;
-    }	
+    }
+    return (head);
 }
 
 /* 
@@ -308,8 +308,8 @@ void
 usage()
 {
     printf("Usage is as follows: \n");
-    printf("    portal-proxy space seperated flags /path/to/config/file\n");
+    printf("    agent space seperated flags /path/to/config/file\n");
     printf("Example: \n");
-    printf("    portal-proxy -C ../../deps/config.txt\n");
+    printf("    ./agent -C ../../deps/config.txt\n");
     exit(0);
 }

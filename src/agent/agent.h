@@ -14,10 +14,10 @@ event_cb(struct bufferevent *bev, short what, void *ctx);
 void 
 parse_hook_command(char *text, char *serv, char *cmd, int len);
 
-service_lst*
+serv_lst*
 find_service(char* serv, serv_lst *services);
 
-void
+int
 execute_command(serv_lst *service, char *cmd);
 
 void
@@ -31,4 +31,7 @@ free_cmd_lst(hook_path_pair *cmds);
 
 void 
 free_buffers(buffer_list *bevs);
+
+void 
+signal_cb(evutil_socket_t sig, short events, void *user_data);
 #endif	
