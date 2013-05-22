@@ -1,6 +1,6 @@
-#include "portal-proxy.h"
-#include "proxySetup.h"
 #include "proxy.h"
+#include "proxy_config.h"
+#include "proxy_events.h"
 
 /* 
  * Call back for information comming in from the monitor, in the buffer info. Function 

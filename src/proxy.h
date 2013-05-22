@@ -67,7 +67,7 @@ void
 usage ();
 
 bool 
-verify_comnd_ln_args(int argc, char **argv);
+validate_args(int argc, char **argv);
 
 service* 
 new_null_service_node();

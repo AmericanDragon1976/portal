@@ -24,51 +24,6 @@ timeout_cb(evutil_socket_t fd, short what, void *arg)
 */
 }
 
-int 
-main(int argc, char **argv) 
-{
-    service             *service_list = NULL;
-    char                file_name[file_nm_len];
-    char                **cmd_args = NULL;
-    struct event_base   *base = NULL;
-    struct event        *signal_event = NULL;
-
-    /* 
-     * Currently -C flag is required but has no effect, if  others are
-     * added later to change behavior change the verfyComndlnArgs() function 
-     * to change what they do
-     */
-
-    cmd_args = argv;
-    if (!verify_comnd_ln_args(argc, cmd_args))
-        usage();
-
-    strcpy(file_name, argv[argc - 1]);
-    service_list = parse_config_file(file_name);    
- 
-    base = event_base_new();
-
-    init_services(base, service_list);
-    init_service_listeners(base, service_list); 
-
-    // This time out event only needed for testing, can be removed in final version
-    struct timeval      five_seconds = {5, 0};
-    struct event        *to_event; 
-
-    to_event = event_new(base, -1, EV_PERSIST, timeout_cb, service_list);
-    event_add(to_event, &five_seconds);
-
-    signal_event = evsignal_new(base, SIGINT, signal_cb, (void *) base);
-    if (!signal_event || event_add(signal_event, NULL) < 0) {
-        fprintf(stderr, "Could not create/add signal event.\n");
-        exit(0);
-    }
-
-    event_base_dispatch(base);
-    free_all_service_nodes(service_list);
-    event_base_free(base);
-}
-
 /* 
  * Prints to screen the proper syntax for running the program, then exits.
  */
@@ -326,4 +281,45 @@ free_pair_list(serv_cli_pair *pair)
         free(temp);
         temp = pair;
     }
+}
+
+int 
+main(int argc, char **argv) 
+{
+    service             *service_list = NULL;
+    struct event_base   *event_loop = NULL;
+    struct event        *signal_event = NULL;
+
+    /* 
+     * Currently -C flag is required but has no effect, if  others are
+     * added later to change behavior change the verfyComndlnArgs() function 
+     * to change what they do
+     */
+
+    if (!validate_args(argc, argv))
+        usage();
+
+    service_list = parse_config_file(argv[argc - 1]);    
+ 
+    event_loop = event_base_new();
+
+    init_services(event_loop, service_list);
+    init_service_listeners(event_loop, service_list); 
+
+    // This time out event only needed for testing, can be removed in final version
+ /*   struct timeval      five_seconds = {5, 0};
+    struct event        *to_event; 
+
+    to_event = event_new(event_loop, -1, EV_PERSIST, timeout_cb, service_list);
+    event_add(to_event, &five_seconds);
+*/
+    kill_event = evsignal_new(event_loop, SIGINT, signal_cb, (void *) event_loop);
+    if (!kill_event || event_add(kill_event, NULL) < 0) {
+        fprintf(stderr, "Could not create/add signal event.\n");
+        exit(0);
+    }
+
+    event_base_dispatch(event_loop);
+    free_all_service_nodes(service_list);
+    event_base_free(event_loop);
 }
