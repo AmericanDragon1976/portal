@@ -313,11 +313,14 @@ main(int argc, char **argv)
     to_event = event_new(event_loop, -1, EV_PERSIST, timeout_cb, service_list);
     event_add(to_event, &five_seconds);
 */
-    kill_event = evsignal_new(event_loop, SIGINT, signal_cb, (void *) event_loop);
-    if (!kill_event || event_add(kill_event, NULL) < 0) {
-        fprintf(stderr, "Could not create/add signal event.\n");
-        exit(0);
-    }
+
+    // init_signals();
+    // this would be in the init_signals() function
+    // kill_event = evsignal_new(event_loop, SIGINT, signal_cb, (void *) event_loop);
+    // if (!kill_event || event_add(kill_event, NULL) < 0) {
+    //     fprintf(stderr, "Could not create/add signal event.\n");
+    //     exit(0);
+    // }
 
     event_base_dispatch(event_loop);
     free_all_service_nodes(service_list);
