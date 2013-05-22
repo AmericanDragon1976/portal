@@ -43,8 +43,8 @@ main (int argc, char **argv)
     ser_n_bevs.s_list = parse_config_file(file_buffer, file_size); 
     free(file_buffer);
     
-    base = event_base_new();                                printf("1\n");
-    listen_for_monitors(base, listener, &ser_n_bevs);       printf("1\n");
+    base = event_base_new();                                
+    listen_for_monitors(base, listener, &ser_n_bevs);       
 
     signal_event = evsignal_new(base, SIGINT, signal_cb, (void *) base);
     if (!signal_event || event_add(signal_event, NULL) < 0) {
