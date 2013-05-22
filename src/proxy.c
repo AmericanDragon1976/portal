@@ -43,7 +43,7 @@ usage()
  * added then this function should be altered accordingly.
  */
 bool 
-verify_comnd_ln_args(int argc, char **argv) 
+validate_args(int argc, char **argv) 
 {
 
     if (argc < 3)         
