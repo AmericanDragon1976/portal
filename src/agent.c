@@ -32,33 +32,33 @@ validate_args(int argc, char **argv)
 }
 
 /*
- * Allocates memory for a new svc_lst, sets all pointer members to NULL, and
+ * Allocates memory for a new svc_list, sets all pointer members to NULL, and
  * returns a pointer to it. 
  */
-svc_lst*
-new_null_svc_lst()
+svc_list*
+new_null_svc_list()
 {
-    svc_lst        *nw_svc_lst = (svc_lst *) malloc(sizeof(svc_lst));
+    svc_list        *nw_svc_list = (svc_list *) malloc(sizeof(svc_list));
 
-    nw_svc_lst->next = NULL;
-    nw_svc_lst->cmd_lst = NULL;
+    nw_svc_list->next = NULL;
+    nw_svc_list->command_lst = NULL;
 
-    return (nw_svc_lst);
+    return (nw_svc_list);
 }
 
 /*
- * Allocates memory for a new svc_lst, sets all pointer members to the value 
+ * Allocates memory for a new svc_list, sets all pointer members to the value 
  * passed in and returns a pointer to it. 
  */
-svc_lst*
-new_svc_lst(svc_lst *nxt, hook_path_pair *cmd_lst_head)
+svc_list*
+new_svc_list(svc_list *nxt, hook_path_pair *command_lst_head)
 {
-    svc_lst        *nw_svc_lst = (svc_lst *) malloc(sizeof(svc_lst));
+    svc_list        *nw_svc_list = (svc_list *) malloc(sizeof(svc_list));
 
-    nw_svc_lst->next = nxt;
-    nw_svc_lst->cmd_lst = cmd_lst_head;
+    nw_svc_list->next = nxt;
+    nw_svc_list->command_lst = command_lst_head;
 
-    return (nw_svc_lst);
+    return (nw_svc_list);
 }
 
 /*
@@ -68,11 +68,11 @@ new_svc_lst(svc_lst *nxt, hook_path_pair *cmd_lst_head)
 hook_path_pair*
 new_null_hook_path_pair()
 {
-    hook_path_pair     *nw_hok_pth_par = (hook_path_pair *) malloc(sizeof(hook_path_pair));
+    hook_path_pair     *new_hook_path_pair = (hook_path_pair *) malloc(sizeof(hook_path_pair));
 
-    nw_hok_pth_par->next = NULL;
+    new_hook_path_pair->next = NULL;
 
-    return (nw_hok_pth_par);
+    return (new_hook_path_pair);
 }
 
 /*
@@ -80,46 +80,46 @@ new_null_hook_path_pair()
  * value passed in and returns a pointer to it. 
  */
 hook_path_pair*
-new_hook_path_pair(hook_path_pair *nxt)
+new_hook_path_pair(hook_path_pair *next)
 {
-    hook_path_pair     *nw_hok_pth_par = (hook_path_pair *) malloc(sizeof(hook_path_pair));
+    hook_path_pair     *new_hook_path_pair = (hook_path_pair *) malloc(sizeof(hook_path_pair));
 
-    nw_hok_pth_par->next = nxt;
+    new_hook_path_pair->next = next;
 
-    return (nw_hok_pth_par);
+    return (new_hook_path_pair);
 }
 
 /* 
- * Takes an adrress in the form a.b.c.d:port_number and parses it storing the ip
- * address and port number in the approiate char arrays, addrToParse[22], ip_addr[16] 
- * and port_num[6], returns true if successful otherwise returns false 
+ * Takes an adrress in the form a.b.c.d:port_numberber and parses it storing the ip
+ * address and port number in the approiate char arrays, address_to_parse[22], ip_address[16] 
+ * and port_number[6], returns true if successful otherwise returns false 
  */
 bool 
-parse_address(char *addrToParse, char *ip_addr, char* port_num) 
+parse_address(char *address_to_parse, char *ip_address, char* port_number) 
 {
     int     i, j;
     bool    port_now = false;
 
     j = 0;
 
-    if ( addrToParse == NULL)
+    if ( address_to_parse == NULL)
         return port_now;
 
-    for (i = 0; i < comp_add_len; ){
-        if (addrToParse[i] == ':') {
+    for (i = 0; i < complete_address_len; ){
+        if (address_to_parse[i] == ':') {
             i++;
-            ip_addr[j] = '\0';
+            ip_address[j] = '\0';
             port_now = true; 
             j = 0;
         }
 
         if (port_now == false)
-            ip_addr[j++] = addrToParse[i++];
+            ip_address[j++] = address_to_parse[i++];
         else 
-            port_num[j++] = addrToParse[i++];
+            port_number[j++] = address_to_parse[i++];
     }
 
-    port_num[j] = '\0';
+    port_number[j] = '\0';
 
     return port_now;
 }
@@ -132,26 +132,26 @@ parse_address(char *addrToParse, char *ip_addr, char* port_num)
  * but will be needed by the cb function, adds to the buffer event list. 
  */
 void
-listen_for_monitors(struct event_base *base, struct evconnlistener *lstnr, list_heads *heads)
+listen_for_monitors(struct event_base *base, struct evconnlistener *local_listener, list_heads *heads)
 {
     char                ip[ip_len], port[port_len];
-    int                 i, port_num;
-    struct sockaddr_in  m_addr;
+    int                 i, port_number;
+    struct sockaddr_in  monitor_address;
     struct in_addr      *inp = (struct in_addr *) malloc(sizeof(struct in_addr));
 
-    if (!parse_address(monitor_addr, ip, port)){
+    if (!parse_address(monitor_address, ip, port)){
         fprintf(stderr, "Bad address agent unable listen for monitor!!\n");
     } else {
-        port_num = atoi(port);
+        port_number = atoi(port);
         i = inet_aton(ip, inp);
-        memset(&m_addr, 0, sizeof(m_addr));
-        m_addr.sin_family = AF_INET;
-        m_addr.sin_addr.s_addr = (*inp).s_addr;
-        m_addr.sin_port = htons(port_num);
-        lstnr = evconnlistener_new_bind(base, monitor_connect_cb, heads, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, 
-            -1, (struct sockaddr *) &m_addr, sizeof(m_addr));
+        memset(&monitor_address, 0, sizeof(monitor_address));
+        monitor_address.sin_family = AF_INET;
+        monitor_address.sin_addr.s_addr = (*inp).s_addr;
+        monitor_address.sin_port = htons(port_number);
+        local_listener = evconnlistener_new_bind(base, monitor_connect_cb, heads, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, 
+            -1, (struct sockaddr *) &monitor_address, sizeof(monitor_address));
 
-        if (!lstnr)
+        if (!local_listener)
             fprintf(stderr, "Couldn't create listner for monitors.\n");
 
         // one listener will create a event buffer for each monitor that connects
@@ -164,31 +164,31 @@ listen_for_monitors(struct event_base *base, struct evconnlistener *lstnr, list_
 int
 main (int argc, char **argv) 
 {
-    char                    file_name[file_nm_len];
-    char                    *file_buffer = NULL, **cmd_args = NULL;
-    FILE                    *file_ptr = NULL;
-    list_heads              ser_n_bevs;
+    char                    file_name[file_name_len];
+    char                    *file_buffer = NULL, **command_args = NULL;
+    FILE                    *file_pointer = NULL;
+    list_heads              services_and_buffer_events;
     int                     file_size = 0;
     struct event_base       *base = NULL;
     struct event            *signal_event = NULL;
     struct evconnlistener   *listener = NULL;
 
-    ser_n_bevs.s_list = NULL;
-    ser_n_bevs.b_list = NULL;
+    services_and_buffer_events.list_of_services = NULL;
+    services_and_buffer_events.list_of_buffer_events = NULL;
 
-    cmd_args = argv;
+    command_args = argv;
 
-    if (!verify_comnd_ln_args(argc, cmd_args)) 
+    if (!verify_comnd_ln_args(argc, command_args)) 
     	usage();
 
-    strcpy(file_name, cmd_args[argc - 1]);
+    strcpy(file_name, command_args[argc - 1]);
     file_size = get_config_file_len(file_name);
     file_buffer = read_file(file_name, file_size);
-    ser_n_bevs.s_list = parse_config_file(file_buffer, file_size); 
+    services_and_buffer_events.list_of_services = parse_config_file(file_buffer, file_size); 
     free(file_buffer);
     
     base = event_base_new();                                
-    listen_for_monitors(base, listener, &ser_n_bevs);       
+    listen_for_monitors(base, listener, &services_and_buffer_events);       
 
     signal_event = evsignal_new(base, SIGINT, signal_cb, (void *) base);
     if (!signal_event || event_add(signal_event, NULL) < 0) {
@@ -198,6 +198,6 @@ main (int argc, char **argv)
 
     event_base_dispatch(base);
     evconnlistener_free(listener);
-    free_lists_memory(&ser_n_bevs);
+    free_lists_memory(&services_and_buffer_events);
     event_base_free(base);
 }

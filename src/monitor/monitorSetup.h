@@ -40,13 +40,13 @@ moni_serv*
 new_moni_svc_node(struct evconnlistener* lstnr, moni_serv* service, struct bufferevent *bevProxy, struct bufferevent *bevAgent);
 
 bool 
-parse_address(char *addr_to_parse, char *ip_addr, char* port_num);
+parse_address(char *addr_to_parse, char *ip_address, char* port_number);
 
 void 
-contact_agents(struct event_base *base, moni_serv *s_list);
+contact_agents(struct event_base *base, moni_serv *list_of_services);
 
 void 
-listen_for_proxys(struct event_base *base, moni_serv *s_list);
+listen_for_proxys(struct event_base *base, moni_serv *list_of_services);
 
 struct addrinfo* 
 set_criteria_addrinfo();

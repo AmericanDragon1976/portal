@@ -28,18 +28,18 @@ get_config_file_len(char *name)
 {
     int     file_len = 0;
     char    *buffer;
-    FILE    *file_ptr;
+    FILE    *file_pointer;
 
-    file_ptr = fopen(name, "r");
+    file_pointer = fopen(name, "r");
 
-    if (file_ptr == NULL) {
+    if (file_pointer == NULL) {
         fprintf(stderr, "Unable to open config file. check file name and path!\n");
         exit(0);
     }
 
-    fseek(file_ptr, 0, SEEK_END);
-    file_len = ftell(file_ptr);
-    fclose(file_ptr);
+    fseek(file_pointer, 0, SEEK_END);
+    file_len = ftell(file_pointer);
+    fclose(file_pointer);
 
     return (file_len);
 }
@@ -52,12 +52,12 @@ char*
 read_file(char *name, int len)
 {
     char    *buffer = (char *) malloc(sizeof(char) * (len));
-    FILE    *file_ptr;
+    FILE    *file_pointer;
     size_t  result;
 
-    file_ptr = fopen(name, "r");
+    file_pointer = fopen(name, "r");
 
-    if (file_ptr == NULL) {
+    if (file_pointer == NULL) {
         fprintf(stderr, "Unable to open file, check file name and path!\n");
         exit(0);
     }
@@ -67,14 +67,14 @@ read_file(char *name, int len)
         exit(0);
     }
 
-    result = fread(buffer, 1, len, file_ptr);
+    result = fread(buffer, 1, len, file_pointer);
 
     if (result != len) {
         fprintf(stderr, "Error reading file.\n");
         exit(0);
     }
 
-    fclose(file_ptr);
+    fclose(file_pointer);
     return (buffer);
 }
 
@@ -177,12 +177,12 @@ new_moni_svc_node (struct evconnlistener* lstnr, moni_serv* service,
 }
 
 /* 
- * Takes an adrress in the form a.b.c.d:port_number and parses it storing the ip
- * address and port number in the approiate char arrays, addr_to_parse[22], ip_addr[16] 
- * and port_num[6], returns true if successful otherwise returns false 
+ * Takes an adrress in the form a.b.c.d:port_numberber and parses it storing the ip
+ * address and port number in the approiate char arrays, addr_to_parse[22], ip_address[16] 
+ * and port_number[6], returns true if successful otherwise returns false 
  */
 bool 
-parse_address (char *addr_to_parse, char *ip_addr, char* port_num) 
+parse_address (char *addr_to_parse, char *ip_address, char* port_number) 
 {
     int     i, j;
     bool    port_now = false;
@@ -195,16 +195,16 @@ parse_address (char *addr_to_parse, char *ip_addr, char* port_num)
     for (i = 0; i < comp_add_len; ){
         if (addr_to_parse[i] == ':') {
             i++;
-            ip_addr[j] = '\0';
+            ip_address[j] = '\0';
             port_now = true; 
             j = 0;
         }
         if (port_now == false)
-            ip_addr[j++] = addr_to_parse[i++];
+            ip_address[j++] = addr_to_parse[i++];
         else 
-            port_num[j++] = addr_to_parse[i++];
+            port_number[j++] = addr_to_parse[i++];
     }
-    port_num[j] = '\0';
+    port_number[j] = '\0';
 
     return (port_now);
 }
@@ -213,19 +213,19 @@ parse_address (char *addr_to_parse, char *ip_addr, char* port_num)
  * Connects to the agent for each service 
  */
 void 
-contact_agents (struct event_base *base, moni_serv *s_list) 
+contact_agents (struct event_base *base, moni_serv *list_of_services) 
 {
-    moni_serv           *curr_serv = s_list;
+    moni_serv           *current_service = list_of_services;
     struct addrinfo     *agent_server = NULL;
     struct addrinfo     *hints = NULL;
 
-    while (curr_serv != NULL) {
+    while (current_service != NULL) {
         char    agent_ip[ip_len], agent_port[port_len]; 
         int     i = 0;
         int     j = 0;
 
-        if (!parse_address(curr_serv->agentAddr, agent_ip, agent_port)) {
-            fprintf(stderr, "Bad address unable to connect to agent for %s\n", curr_serv->name);
+        if (!parse_address(current_service->agentAddr, agent_ip, agent_port)) {
+            fprintf(stderr, "Bad address unable to connect to agent for %s\n", current_service->name);
         }
         else {
             hints = set_criteria_addrinfo();
@@ -233,23 +233,23 @@ contact_agents (struct event_base *base, moni_serv *s_list)
 
             if (i != 0) {
                 fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(i));
-                curr_serv = curr_serv->next;
+                current_service = current_service->next;
                 continue;
             }
 
-            curr_serv->b_agent = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
-            bufferevent_setcb(curr_serv->b_agent, NULL, NULL, NULL, s_list);       //add actuall call back functions in place of NULL as they are written (read, write, event)
+            current_service->b_agent = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
+            bufferevent_setcb(current_service->b_agent, NULL, NULL, NULL, list_of_services);       //add actuall call back functions in place of NULL as they are written (read, write, event)
 
-            if(bufferevent_socket_connect(curr_serv->b_agent, agent_server->ai_addr, agent_server->ai_addrlen) != 0) { 
+            if(bufferevent_socket_connect(current_service->b_agent, agent_server->ai_addr, agent_server->ai_addrlen) != 0) { 
                 fprintf(stderr, "Error connecting to agent\n"); 
-                bufferevent_free(curr_serv->b_agent);
+                bufferevent_free(current_service->b_agent);
             } 
 
-            bufferevent_enable(curr_serv->b_agent, EV_READ|EV_WRITE);
-            bufferevent_write(curr_serv->b_agent, curr_serv->name, sizeof(curr_serv->name));
+            bufferevent_enable(current_service->b_agent, EV_READ|EV_WRITE);
+            bufferevent_write(current_service->b_agent, current_service->name, sizeof(current_service->name));
         }
 
-        curr_serv = curr_serv->next;
+        current_service = current_service->next;
     }
 }
 
@@ -257,7 +257,7 @@ contact_agents (struct event_base *base, moni_serv *s_list)
  * creates a listener for each servics to listen for the proxys and establish the buffer events for them at that time 
  */
 void 
-listen_for_proxys(struct event_base *base, moni_serv *s_list)
+listen_for_proxys(struct event_base *base, moni_serv *list_of_services)
 {
     // TODO: create listener for each service and begin listening for proxys. First contact from a proxy is request for info.
 }

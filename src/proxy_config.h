@@ -12,5 +12,5 @@
 int get_config_file_len(char *name);
 char* read_file(char *name, int len);
 service* parse_config_file (char *name);
-bool parse_address(char *addrToParse, char *ip_addr, char* port_num);
+bool parse_address(char *address_to_parse, char *ip_address, char* port_number);
 #endif

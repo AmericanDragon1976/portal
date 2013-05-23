@@ -7,19 +7,19 @@ main (int argc, char **argv)
 {
     moni_serv           *service_list = NULL;
     char                file_name[file_nm_len];
-    char                *file_buffer = NULL, **cmd_args = NULL;
-    FILE                *file_ptr = NULL;
+    char                *file_buffer = NULL, **command_args = NULL;
+    FILE                *file_pointer = NULL;
     int                 file_size;
     struct event_base   *base = NULL;
     struct event        *signal_event = NULL;
     struct event        *to_event;     // TODO: use to query agents on status of service on a timer.
 
-    cmd_args = argv;
+    command_args = argv;
 
-    if (!verify_comnd_args(argc, cmd_args)) 
+    if (!verify_comnd_args(argc, command_args)) 
         usage();
 
-    strcpy(file_name, cmd_args[argc - 1]);
+    strcpy(file_name, command_args[argc - 1]);
     file_size = get_config_file_len(file_name);
     file_buffer = read_file(file_name, file_size);
     service_list = parse_config_file(file_buffer, file_size);

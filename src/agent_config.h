@@ -7,7 +7,7 @@ get_config_file_len(char *name);
 char* 
 read_file(char *name, int len);
 
-svc_lst* 
+svc_list* 
 parse_config_file(char *buff, int len);
 
 #endif

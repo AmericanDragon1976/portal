@@ -13,17 +13,17 @@ get_config_file_len(char *name)
 {
     int     file_len = 0;
     char    *buffer;
-    FILE    *file_ptr;
+    FILE    *file_pointer;
 
-    file_ptr = fopen(name, "r");
-    if (file_ptr == NULL) {
+    file_pointer = fopen(name, "r");
+    if (file_pointer == NULL) {
         fprintf(stderr, "Unable to open config file. chech file name and path!\n");
         exit(0);
     }
 
-    fseek(file_ptr, 0, SEEK_END);
-    file_len = ftell(file_ptr);
-    fclose(file_ptr);
+    fseek(file_pointer, 0, SEEK_END);
+    file_len = ftell(file_pointer);
+    fclose(file_pointer);
 
     return (file_len);
 }
@@ -36,11 +36,11 @@ char*
 read_file(char *name, int len)
 {
     char    *buffer = (char *) malloc(sizeof(char) * (len));
-    FILE    *file_ptr;
+    FILE    *file_pointer;
     size_t  result;
 
-    file_ptr = fopen(name, "r");
-    if (file_ptr == NULL) {
+    file_pointer = fopen(name, "r");
+    if (file_pointer == NULL) {
         fprintf(stderr, "Unable to open file, check file name and path!\n");
         exit(0);
     }
@@ -49,12 +49,12 @@ read_file(char *name, int len)
         fprintf(stderr, "Memory Error, creation of File Buffer Failed!\n");
         exit(0);
     }
-    result = fread(buffer, 1, len, file_ptr);
+    result = fread(buffer, 1, len, file_pointer);
     if (result != len) {
         fprintf(stderr, "Error reading file.\n");
         exit(0);
     }
-    fclose(file_ptr);
+    fclose(file_pointer);
     return (buffer);
 }
 
@@ -67,7 +67,7 @@ parse_config_file(char *name)
 {
     service     *list_head = new_null_service_node();
     service     *current_record = list_head;
-    char        serIdent[] = "service";
+    char        service_start_identifier[] = "service";
     int 		len = get_config_file_len(name);
     char 		*buffer = read_file(name, len);
 
@@ -75,41 +75,41 @@ parse_config_file(char *name)
     int i = 0;
 
     while (i < len){
-        for (j = 0; j < sizeof(serIdent) - 1; j++)  // read Identifier "service"
-            serIdent[j] =  buff[i++];
+        for (j = 0; j < sizeof(service_start_identifier) - 1; j++)  // read Identifier "service"
+            service_start_identifier[j] =  buffer[i++];
 
-        i++;                                        // advance past white space
+        i++;                                                         // advance past white space
 
-        if (strcmp(serIdent, "service")){           // returns 0 (false) only if they are equal
+        if (strcmp(service_start_identifier, "service")){           // returns 0 (false) only if they are equal
             fprintf(stderr, "Config file Corrupted. \n");
             exit(0);
         }
 
         j = 0;
 
-        while (buff[i] != '\n') 
-            current_record->name[j++] = buff[i++];   // read service name
+        while (buffer[i] != '\n') 
+            current_record->name[j++] = buffer[i++];   // read service name
 
         current_record->name[j] = '\0';
         i++;                                        // disgard \n
 
-        for (; buff[i++] != 'n';);                  // find end of identifier "listen"
+        for (; buffer[i++] != 'n';);                  // find end of identifier "listen"
 
         i++;                                        // advance beyond white space
         j = 0;
 
-        while (buff[i] != '\n')
-            current_record->listen[j++] = buff[i++]; // read listen address
+        while (buffer[i] != '\n')
+            current_record->listen[j++] = buffer[i++]; // read listen address
 
         current_record->listen[j] = '\0';
 
-        for (;buff[i++] != 'r';)                    // find end of identifier "monitor"
+        for (;buffer[i++] != 'r';)                    // find end of identifier "monitor"
             ;                   
         i++;                                        // advance beyond white space
         j = 0;
 
-        while (i < len && buff[i] != '\n')
-            current_record->monitor[j++] = buff[i++];// read monitor address
+        while (i < len && buffer[i] != '\n')
+            current_record->monitor[j++] = buffer[i++];// read monitor address
 
         current_record->monitor[j] = '\0';
 
@@ -117,7 +117,7 @@ parse_config_file(char *name)
             current_record->next = new_null_service_node();
 
             current_record = current_record->next;
-            for (; buff[i++] != 's';)              // advance to next record
+            for (; buffer[i++] != 's';)              // advance to next record
                 ;
 
             i--;
@@ -128,36 +128,36 @@ parse_config_file(char *name)
 }
 
 /* 
- * Takes an adrress in the form a.b.c.d:port_number and parses it storing the ip
- * address and port number in the approiate char arrays, addrToParse[22], ip_addr[16] 
- * and port_num[6], returns true if successful otherwise returns false 
+ * Takes an adrress in the form a.b.c.d:port_numberber and parses it storing the ip
+ * address and port number in the approiate char arrays, address_to_parse[22], ip_address[16] 
+ * and port_number[6], returns true if successful otherwise returns false 
  */
 bool 
-parse_address(char *addrToParse, char *ip_addr, char* port_num) 
+parse_address(char *address_to_parse, char *ip_address, char* port_number) 
 {
     int     i, j;
     bool    port_now = false;
 
     j = 0;
 
-    if ( addrToParse == NULL)
+    if ( address_to_parse == NULL)
         return port_now;
 
-    for (i = 0; i < comp_add_len; ){
-        if (addrToParse[i] == ':') {
+    for (i = 0; i < complete_address_len; ){
+        if (address_to_parse[i] == ':') {
             i++;
-            ip_addr[j] = '\0';
+            ip_address[j] = '\0';
             port_now = true; 
             j = 0;
         }
 
         if (port_now == false)
-            ip_addr[j++] = addrToParse[i++];
+            ip_address[j++] = address_to_parse[i++];
         else 
-            port_num[j++] = addrToParse[i++];
+            port_number[j++] = address_to_parse[i++];
     }
 
-    port_num[j] = '\0';
+    port_number[j] = '\0';
 
     return port_now;
 }
