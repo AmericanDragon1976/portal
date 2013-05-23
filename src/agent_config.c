@@ -1,6 +1,22 @@
-#incslude "agent.h" 
+#include "agent.h" 
 #include "agent_config.h"
 #include "agent_events.h"
+
+/*
+ * Takes a pointer to a linked list of agent services and prints the information contained in 
+ * the linked list to stdout.  
+ */
+void print_hook_list(svc_list *list)
+{
+    while (list != NULL){ 
+        hook_path_pair  *temp = list->hook_list;
+        while (temp != NULL){ 
+            printf("command: %s, Path: %s\n", temp->hook, temp->path);
+            temp = temp->next;
+        }
+        list = list->next;
+    }
+}
 
 /* 
  * Returns the length of the config file. There is a good probility that 
@@ -68,7 +84,7 @@ read_file(char *name, int len)
  * commands it can use to test the service. 
  */
 svc_list* 
-parse_config_file(char *buffer, int len) 
+parse_config_file(char *name) 
 {
     svc_list    *head = NULL; 
     svc_list    *current_node = NULL;
@@ -76,6 +92,8 @@ parse_config_file(char *buffer, int len)
     char        hook_name[hook_len];
     char        hook_path[file_name_len];
     int         i, j;
+    int         len = get_config_file_len(name);
+    char        *buffer = read_file(name, len);
 
     if(buffer == NULL || len < 1){
         fprintf(stderr, "Errer reading config file!!\n");
@@ -154,5 +172,6 @@ parse_config_file(char *buffer, int len)
         current_node->next = head;
         head = current_node;
     }
+    free(buffer);
     return (head);
 }

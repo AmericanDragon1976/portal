@@ -180,13 +180,8 @@ void init_signals(event_loop)
 int
 main (int argc, char **argv) 
 {
-    char                    file_name[file_name_len];
-    char                    *file_buffer = NULL, **command_args = NULL;
-    FILE                    *file_pointer = NULL;
     list_heads              services_and_buffer_events;
-    int                     file_size = 0;
     struct event_base       *event_loop = NULL;
-    struct event            *signal_event = NULL;
     struct evconnlistener   *listener = NULL;
 
     services_and_buffer_events.list_of_services = NULL;
