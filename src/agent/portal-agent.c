@@ -2,7 +2,7 @@
 #include "agentSetup.h"
 #include "agent.h"
 
-void print_cmd_lst(serv_lst *list)
+void print_cmd_lst(svc_lst *list)
 {
     while (list != NULL){ 
         hook_path_pair  *temp = list->cmd_lst;

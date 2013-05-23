@@ -85,7 +85,7 @@ read_file(char *name, int len)
 moni_serv* 
 parse_config_file(char *buff, int len) 
 { 
-    moni_serv   *listHead = new_null_moni_serv_node();
+    moni_serv   *listHead = new_null_moni_svc_node();
     moni_serv   *currentRecord = listHead;
     char        serIdent[] = "service";
     int         j = 0;
@@ -133,7 +133,7 @@ parse_config_file(char *buff, int len)
         currentRecord->agentAddr[j] = '\0';
 
         if (i < len){
-            currentRecord->next = new_null_moni_serv_node();
+            currentRecord->next = new_null_moni_svc_node();
             currentRecord = currentRecord->next;
 
             for (; buff[i++] != 's';)               // advance to next record
@@ -147,7 +147,7 @@ parse_config_file(char *buff, int len)
  * creates a new instance of a moni_serv struct with all pointers inicilized to NULL 
  */
 moni_serv* 
-new_null_moni_serv_node() 
+new_null_moni_svc_node() 
 {
     moni_serv   *nw_moni_serv = (moni_serv *) malloc(sizeof(moni_serv));
 
@@ -163,7 +163,7 @@ new_null_moni_serv_node()
  * creates a new instance of moni_serve struct with pointers set to the passed in values 
  */
 moni_serv* 
-new_moni_serv_node (struct evconnlistener* lstnr, moni_serv* service, 
+new_moni_svc_node (struct evconnlistener* lstnr, moni_serv* service, 
     struct bufferevent *bevProxy, struct bufferevent *bevAgent) 
 {
     moni_serv   *nw_moni_serv = (moni_serv *) malloc(sizeof(moni_serv));

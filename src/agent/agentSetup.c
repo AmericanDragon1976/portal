@@ -79,33 +79,33 @@ read_file(char *name, int len)
 }
 
 /*
- * Allocates memory for a new serv_lst, sets all pointer members to NULL, and
+ * Allocates memory for a new svc_lst, sets all pointer members to NULL, and
  * returns a pointer to it. 
  */
-serv_lst*
-new_null_serv_lst()
+svc_lst*
+new_null_svc_lst()
 {
-    serv_lst        *nw_serv_lst = (serv_lst *) malloc(sizeof(serv_lst));
+    svc_lst        *nw_svc_lst = (svc_lst *) malloc(sizeof(svc_lst));
 
-    nw_serv_lst->next = NULL;
-    nw_serv_lst->cmd_lst = NULL;
+    nw_svc_lst->next = NULL;
+    nw_svc_lst->cmd_lst = NULL;
 
-    return (nw_serv_lst);
+    return (nw_svc_lst);
 }
 
 /*
- * Allocates memory for a new serv_lst, sets all pointer members to the value 
+ * Allocates memory for a new svc_lst, sets all pointer members to the value 
  * passed in and returns a pointer to it. 
  */
-serv_lst*
-new_serv_lst(serv_lst *nxt, hook_path_pair *cmd_lst_head)
+svc_lst*
+new_svc_lst(svc_lst *nxt, hook_path_pair *cmd_lst_head)
 {
-    serv_lst        *nw_serv_lst = (serv_lst *) malloc(sizeof(serv_lst));
+    svc_lst        *nw_svc_lst = (svc_lst *) malloc(sizeof(svc_lst));
 
-    nw_serv_lst->next = nxt;
-    nw_serv_lst->cmd_lst = cmd_lst_head;
+    nw_svc_lst->next = nxt;
+    nw_svc_lst->cmd_lst = cmd_lst_head;
 
-    return (nw_serv_lst);
+    return (nw_svc_lst);
 }
 
 /*
@@ -141,11 +141,11 @@ new_hook_path_pair(hook_path_pair *nxt)
  * Returns a service list, each service has a name and a list of 
  * commands it can use to test the service. 
  */
-serv_lst* 
+svc_lst* 
 parse_config_file(char *buff, int len) 
 {
-    serv_lst    *head = NULL; 
-    serv_lst    *curr_node = NULL;
+    svc_lst    *head = NULL; 
+    svc_lst    *curr_node = NULL;
     char        text[file_nm_len] = {};
     char        hook_nm[hook_len];
     char        hook_path[file_nm_len];
@@ -174,7 +174,7 @@ parse_config_file(char *buff, int len)
     }
 
     while (i < len) {
-        curr_node = new_null_serv_lst();
+        curr_node = new_null_svc_lst();
         j = 0;
        bzero(&text, file_nm_len);
 

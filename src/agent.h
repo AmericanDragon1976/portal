@@ -21,7 +21,7 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
-#define serv_nm_siz     30      // length of all char arrays holding service names
+#define svc_nm_siz     30      // length of all char arrays holding service names
 #define comp_add_len    22      // length of char arrays holding address a.d.c.e:portnum
 #define file_nm_len     100     // length of file names including path to them
 #define ip_len          16      // length of ip portion of address
@@ -39,9 +39,9 @@ typedef struct hook_path_pair {
 
 typedef struct service_list {
     struct service_list         *next;
-    char                        name[serv_nm_siz];
+    char                        name[svc_nm_siz];
     hook_path_pair              *cmd_lst;
-} serv_lst;
+} svc_lst;
 
 typedef struct buffer_list {
     struct buffer_list      *next;
@@ -49,7 +49,7 @@ typedef struct buffer_list {
 } buffer_list;
 
 typedef struct {
-    serv_lst    *s_list;
+    svc_lst    *s_list;
     buffer_list *b_list;
 } list_heads;
 
@@ -59,11 +59,11 @@ usage();
 bool 
 validate_args(int argc, char **argv);
 
-serv_lst*
-new_null_serv_lst();
+svc_lst*
+new_null_svc_lst();
 
-serv_lst*
-new_serv_lst(serv_lst *nxt, hook_path_pair *cmd_lst_head);
+svc_lst*
+new_svc_lst(svc_lst *nxt, hook_path_pair *cmd_lst_head);
 
 hook_path_pair*
 new_null_hook_path_pair();
@@ -81,7 +81,7 @@ void
 free_lists_memory(list_heads *heads);
 
 void 
-free_service_nodes(serv_lst *service_list);
+free_service_nodes(svc_lst *service_list);
 
 void 
 free_cmd_lst(hook_path_pair *cmds);

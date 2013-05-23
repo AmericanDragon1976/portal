@@ -67,11 +67,11 @@ read_file(char *name, int len)
  * Returns a service list, each service has a name and a list of 
  * commands it can use to test the service. 
  */
-serv_lst* 
+svc_lst* 
 parse_config_file(char *buff, int len) 
 {
-    serv_lst    *head = NULL; 
-    serv_lst    *curr_node = NULL;
+    svc_lst    *head = NULL; 
+    svc_lst    *curr_node = NULL;
     char        text[file_nm_len] = {};
     char        hook_nm[hook_len];
     char        hook_path[file_nm_len];
@@ -100,7 +100,7 @@ parse_config_file(char *buff, int len)
     }
 
     while (i < len) {
-        curr_node = new_null_serv_lst();
+        curr_node = new_null_svc_lst();
         j = 0;
        bzero(&text, file_nm_len);
 

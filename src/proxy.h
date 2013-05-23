@@ -20,7 +20,7 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
-#define serv_nm_siz     30      // length of all char arrays holding service names
+#define svc_nm_siz     30      // length of all char arrays holding service names
 #define comp_add_len    22      // length of char arrays holding address a.d.c.e:portnum
 #define file_nm_len     100     // length of file names
 #define ip_len          16      // length of ip portion of address
@@ -33,7 +33,7 @@
 typedef struct service_client_pair {
     struct bufferevent          *b_client, *b_service;
     struct service_client_pair  *next;
-} serv_cli_pair;
+} svc_cli_pair;
 
 /* 
  * Keeps all inportant information about a particular servcie that will be proxy 
@@ -41,14 +41,14 @@ typedef struct service_client_pair {
  * services. This struct is used for each node in the list. 
  */
 typedef struct service {
-    char                    name[serv_nm_siz];
+    char                    name[svc_nm_siz];
     struct                  service *next;
     char                    listen[comp_add_len];    // listen for clients on this address
     char                    monitor[comp_add_len];   // connect to monitor programm at the address
     char                    serv[comp_add_len];      // address to connect service to
     struct evconnlistener   *listener;
     struct bufferevent      *b_monitor;
-    serv_cli_pair           *client_list;
+    svc_cli_pair           *client_list;
 } service;
 
 /* 
@@ -60,47 +60,23 @@ typedef struct service {
  */
 typedef struct service_package {
     service         *serv;
-    serv_cli_pair   *pair;
+    svc_cli_pair   *pair;
 } service_pack;
 
-void 
-usage ();
-
-bool 
-validate_args(int argc, char **argv);
-
-service* 
-new_null_service_node();
-
-service* 
-new_service_node(service *nxt, struct evconnlistener *lstnr, 
-    struct bufferevent *bevm, serv_cli_pair *scp);
-
-serv_cli_pair* 
-new_null_serv_cli_pair();
-
-serv_cli_pair* 
-new_serv_cli_pair(struct bufferevent *client, struct bufferevent *service, 
-    serv_cli_pair *nxt);
-
-service_pack* 
-new_null_service_package();
-
-service_pack* 
-new_service_package(service *srvs, serv_cli_pair *par);
-
-void 
-init_services (struct event_base *eBase, service *serv_list);
-
-void 
-init_service_listeners(struct event_base *eBase, service *serv_list);
-
-struct 
+void usage ();
+bool validate_args(int argc, char **argv);
+service* new_null_service_node();
+service* new_service_node(service *nxt, struct evconnlistener *lstnr, 
+    struct bufferevent *bevm, svc_cli_pair *scp);
+svc_cli_pair* new_null_svc_cli_pair();
+svc_cli_pair* new_svc_cli_pair(struct bufferevent *client, struct bufferevent *service, 
+    svc_cli_pair *nxt);
+service_pack* new_null_service_package();
+service_pack* new_service_package(service *srvs, svc_cli_pair *par);
+void init_services (struct event_base *eBase, service *svc_list);
+void init_service_listeners(struct event_base *eBase, service *svc_list);
 addrinfo* set_criteria_addrinfo();
+void free_all_service_nodes (service *svc_list);
+void free_pair_list(svc_cli_pair *pair);
 
-void 
-free_all_service_nodes (service *serv_list);
-
-void 
-free_pair_list(serv_cli_pair *pair);
 #endif

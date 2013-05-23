@@ -10,14 +10,14 @@ get_config_file_len(char *name);
 char* 
 read_file(char *name, int len);
 
-serv_lst* 
+svc_lst* 
 parse_config_file(char *buff, int len);
 
-serv_lst*
-new_serv_lst(serv_lst *nxt, hook_path_pair *cmd_lst_head);
+svc_lst*
+new_svc_lst(svc_lst *nxt, hook_path_pair *cmd_lst_head);
 
-serv_lst*
-new_null_serv_lst();
+svc_lst*
+new_null_svc_lst();
 
 hook_path_pair*
 new_null_hook_path_pair();

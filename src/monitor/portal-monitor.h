@@ -20,7 +20,7 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
-#define serv_nm_siz     30      // length of all char arrays holding service names
+#define svc_nm_siz     30      // length of all char arrays holding service names
 #define comp_add_len    22      // length of char arrays holding address a.d.c.e:portnum
 #define file_nm_len     100     // length of file names
 #define ip_len          16      // length of ip portion of address
@@ -32,7 +32,7 @@ typedef struct proxy_list {
 } proxy_node;
 
 typedef struct monitor_service {
-	char 					name [serv_nm_siz];
+	char 					name [svc_nm_siz];
 	char 					agentAddr[comp_add_len]; 			// connect to agent on this address
 	char 					proxyAddr[comp_add_len];			// listen for porxy on this address
 	struct evconnlistener 	*listener;

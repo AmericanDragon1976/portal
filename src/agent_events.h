@@ -17,9 +17,9 @@ signal_cb(evutil_socket_t sig, short events, void *user_data);
 void 
 parse_hook_command(char *text, char *serv, char *cmd, int len);
 
-serv_lst*
-find_service(char* serv, serv_lst *services);
+svc_lst*
+find_service(char* serv, svc_lst *services);
 
 int
-execute_command(serv_lst *service, char *cmd);
+execute_command(svc_lst *service, char *cmd);
 #endif

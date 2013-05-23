@@ -34,10 +34,10 @@ moni_serv*
 parse_config_file(char *buff, int len);
 
 moni_serv* 
-new_null_moni_serv_node();
+new_null_moni_svc_node();
 
 moni_serv* 
-new_moni_serv_node(struct evconnlistener* lstnr, moni_serv* service, struct bufferevent *bevProxy, struct bufferevent *bevAgent);
+new_moni_svc_node(struct evconnlistener* lstnr, moni_serv* service, struct bufferevent *bevProxy, struct bufferevent *bevAgent);
 
 bool 
 parse_address(char *addr_to_parse, char *ip_addr, char* port_num);

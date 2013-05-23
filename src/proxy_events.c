@@ -11,13 +11,13 @@
  * all clients connected and free memory. 
  */
 void 
-monitor_read_cb(struct bufferevent *bev, void *serv_list)
+monitor_read_cb(struct bufferevent *bev, void *svc_list)
 {
-    service     *current_serv = (service *) serv_list;
+    service     *current_serv = (service *) svc_list;
     struct      evbuffer *input = bufferevent_get_input(bev);
     int         len, i, j, k;
     bool        now_addr = false;
-    char        *text, temp_name[serv_nm_siz], temp_addr[comp_add_len];
+    char        *text, temp_name[svc_nm_siz], temp_addr[comp_add_len];
 
     len = evbuffer_get_length(input);
     text = (char *) malloc(len);
@@ -58,7 +58,7 @@ monitor_read_cb(struct bufferevent *bev, void *serv_list)
 
         if (strcmp(temp_addr, current_serv->serv) != 0){
             strcpy(current_serv->serv, temp_addr);
-            serv_cli_pair *temp = current_serv->client_list;
+            svc_cli_pair *temp = current_serv->client_list;
 
             while(current_serv->client_list != NULL){
                 current_serv->client_list = temp->next;
@@ -82,10 +82,10 @@ client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd,
                    struct sockaddr *address, int socklen, void *ctx)
 { 
     service             *curr_service;
-    service_pack        *current_serv_pack = NULL; 
+    service_pack        *current_svc_pack = NULL; 
     struct event_base   *base = evconnlistener_get_base(listener);
     struct addrinfo     *hints = NULL;
-    struct addrinfo     *serv_addr = NULL;
+    struct addrinfo     *svc_addr = NULL;
     char                ip_addr[16] = {'\0'}, port_num[6] = {'\0'};
 
     curr_service = (service *) ctx;
@@ -93,12 +93,12 @@ client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd,
     while (curr_service != NULL) { 
         if(curr_service->listener == listener) {
             // create a new Service Client Pair and add it to the Client List
-            serv_cli_pair *proxy_pair = new_null_serv_cli_pair();
+            svc_cli_pair *proxy_pair = new_null_svc_cli_pair();
 
             // create event buffers to proxy client
             proxy_pair->b_client =  bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
             proxy_pair->b_service = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
-            current_serv_pack = new_service_package(curr_service, proxy_pair);
+            current_svc_pack = new_service_package(curr_service, proxy_pair);
             int i = 0; 
             int j = 0; 
             bool port_now = false;
@@ -107,17 +107,17 @@ client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd,
                 fprintf(stderr, "Bad address unable to connect client to %s\n", curr_service->name);
             else {
                 hints = set_criteria_addrinfo (); 
-                i = getaddrinfo(ip_addr, port_num, hints, &serv_addr);
+                i = getaddrinfo(ip_addr, port_num, hints, &svc_addr);
 
                 if (i != 0) {
                     fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(i));
                     return;
                 }
 
-                bufferevent_setcb(proxy_pair->b_client, proxy_read_cb, NULL, event_cb, current_serv_pack); 
+                bufferevent_setcb(proxy_pair->b_client, proxy_read_cb, NULL, event_cb, current_svc_pack); 
                 bufferevent_enable(proxy_pair->b_client, EV_READ|EV_WRITE);
 
-                if (bufferevent_socket_connect(proxy_pair->b_service, serv_addr->ai_addr, serv_addr->ai_addrlen) != 0) { 
+                if (bufferevent_socket_connect(proxy_pair->b_service, svc_addr->ai_addr, svc_addr->ai_addrlen) != 0) { 
                     fprintf(stderr, "Error Connecting to service\n");
                     char errorMsg[] = "Unable to connect, try again;";
                     bufferevent_write(proxy_pair->b_client, &errorMsg, sizeof(errorMsg));
@@ -126,7 +126,7 @@ client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd,
                 return;
                 }
 
-                bufferevent_setcb(proxy_pair->b_service, proxy_read_cb, NULL, event_cb, current_serv_pack);
+                bufferevent_setcb(proxy_pair->b_service, proxy_read_cb, NULL, event_cb, current_svc_pack);
                 bufferevent_enable(proxy_pair->b_service, EV_READ|EV_WRITE);
     
                 // add pair of buffer events to client_list for this service
@@ -147,8 +147,8 @@ client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd,
 void 
 proxy_read_cb(struct bufferevent *bev, void *srv_pck) 
 { 
-    service_pack        *serv_pack = (service_pack *) srv_pck;
-    serv_cli_pair       *cur_pair = serv_pack->pair;
+    service_pack        *svc_pack = (service_pack *) srv_pck;
+    svc_cli_pair       *cur_pair = svc_pack->pair;
     struct bufferevent  *partner = NULL;
     struct evbuffer     *src, *dst;
 
@@ -161,10 +161,10 @@ proxy_read_cb(struct bufferevent *bev, void *srv_pck)
 
     if(!partner){ 
 // no partner free the bufferevents free associated memory and remove pair from client_listand return 
-        serv_cli_pair *temp = serv_pack->serv->client_list;
+        svc_cli_pair *temp = svc_pack->serv->client_list;
 
-        if (temp = serv_pack->pair) {        // the trigger buffer is part of the first client service pair in the list
-            serv_pack->serv->client_list = temp->next;
+        if (temp = svc_pack->pair) {        // the trigger buffer is part of the first client service pair in the list
+            svc_pack->serv->client_list = temp->next;
             bufferevent_free(temp->b_client);
             bufferevent_free(temp->b_service);
             free(temp);
@@ -172,7 +172,7 @@ proxy_read_cb(struct bufferevent *bev, void *srv_pck)
         }
         while (temp != NULL) {
 
-            if (temp->next == serv_pack->pair) {
+            if (temp->next == svc_pack->pair) {
                 cur_pair = temp;
                 temp = temp->next;
                 cur_pair->next = temp->next;

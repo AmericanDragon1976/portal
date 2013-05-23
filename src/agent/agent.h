@@ -14,17 +14,17 @@ event_cb(struct bufferevent *bev, short what, void *ctx);
 void 
 parse_hook_command(char *text, char *serv, char *cmd, int len);
 
-serv_lst*
-find_service(char* serv, serv_lst *services);
+svc_lst*
+find_service(char* serv, svc_lst *services);
 
 int
-execute_command(serv_lst *service, char *cmd);
+execute_command(svc_lst *service, char *cmd);
 
 void
 free_lists_memory(list_heads *heads);
 
 void 
-free_service_nodes(serv_lst *service_list);
+free_service_nodes(svc_lst *service_list);
 
 void 
 free_cmd_lst(hook_path_pair *cmds);

@@ -35,7 +35,7 @@ read_cb(struct bufferevent *bev, void *heads)
 {
     struct      evbuffer *input = bufferevent_get_input(bev);
     char        *text, *serv, *cmd;
-    serv_lst    *temp_service;
+    svc_lst    *temp_service;
     int         len, result;
     list_heads  *lst_hds = (list_heads *) heads;
 
@@ -83,10 +83,10 @@ parse_hook_command(char *text, char *serv, char* cmd, int len)
  * and returns a pointer to the named service's node. If there is no match
  * returns NULL. 
  */
-serv_lst*
-find_service(char *serv, serv_lst *services)
+svc_lst*
+find_service(char *serv, svc_lst *services)
 {
-    serv_lst *curr_serv = services;
+    svc_lst *curr_serv = services;
 
     while (curr_serv != NULL) {
         if (strcmp(curr_serv->name, serv) != 0)
@@ -104,7 +104,7 @@ find_service(char *serv, serv_lst *services)
  * commands for that service, executes it and returns any responce. 
  */
  int
- execute_command(serv_lst *service, char *cmd)
+ execute_command(svc_lst *service, char *cmd)
  {
     hook_path_pair      *hook_lst = service->cmd_lst;
 
@@ -169,9 +169,9 @@ free_lists_memory(list_heads *heads)
  * associated with that list. 
  */
 void 
-free_service_nodes(serv_lst *service_list)
+free_service_nodes(svc_lst *service_list)
 {
-    serv_lst    *temp = service_list;
+    svc_lst    *temp = service_list;
 
     while (service_list != NULL){ 
         free_cmd_lst(service_list->cmd_lst);

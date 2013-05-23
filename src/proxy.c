@@ -10,7 +10,7 @@
 
 
 /* 
- * called by to_ event every time it times out. They body is commented out
+ * Called by to_ event every time it times out. They body is commented out
  * because its current use is for testing some aspects and it may be removed 
  * from the final product. 
  */
@@ -62,14 +62,14 @@ validate_args(int argc, char **argv)
 service* 
 new_null_service_node() 
 {
-    service     *nw_node = (service *) calloc(1, sizeof(service));
+    service     *new_node = (service *) calloc(1, sizeof(service));
 
-    nw_node->next = NULL;
-    nw_node->listener = NULL;
-    nw_node->b_monitor = NULL;
-    nw_node->client_list = NULL;
+    new_node->next = NULL;
+    new_node->listener = NULL;
+    new_node->b_monitor = NULL;
+    new_node->client_list = NULL;
 
-    return (nw_node);
+    return (new_node);
 }
 
 /* 
@@ -79,46 +79,46 @@ new_null_service_node()
  */
 service* 
 new_service_node(service *nxt, struct evconnlistener *lstnr, 
-               struct bufferevent *bevm, serv_cli_pair *scp) 
+               struct bufferevent *bevm, svc_cli_pair *scp) 
 {
-    service     *nw_node = (service *) calloc(1, sizeof(service));
+    service     *new_node = (service *) calloc(1, sizeof(service));
 
-    nw_node->next = nxt;
-    nw_node->listener = lstnr;
-    nw_node->b_monitor = bevm;
-    nw_node->client_list = scp;
+    new_node->next = nxt;
+    new_node->listener = lstnr;
+    new_node->b_monitor = bevm;
+    new_node->client_list = scp;
 
-    return nw_node;
+    return new_node;
 }
 
 /*  
- * allocates memeory for a new serv_cli_pair and sets their members inicial values to NULL
+ * Allocates memeory for a new svc_cli_pair and sets their members inicial values to NULL
  */
-serv_cli_pair* 
-new_null_serv_cli_pair () {
-    serv_cli_pair   *nw_pair = (serv_cli_pair *) malloc(sizeof(serv_cli_pair));
+svc_cli_pair* 
+new_null_svc_cli_pair () {
+    svc_cli_pair   *new_pair = (svc_cli_pair *) malloc(sizeof(svc_cli_pair));
 
-    nw_pair->b_client = NULL;
-    nw_pair->b_service = NULL;
-    nw_pair->next = NULL;
+    new_pair->b_client = NULL;
+    new_pair->b_service = NULL;
+    new_pair->next = NULL;
 
-    return nw_pair;
+    return new_pair;
 }
 
 
 /* 
- * allocates memeory for a new serv_cli_pair and sets their members inicial values as supplied by caller 
+ * Allocates memeory for a new svc_cli_pair and sets their members inicial values as supplied by caller 
  */
-serv_cli_pair* 
-new_serv_cli_pair(struct bufferevent *client, struct bufferevent *service, serv_cli_pair *nxt)
+svc_cli_pair* 
+new_svc_cli_pair(struct bufferevent *client, struct bufferevent *service, svc_cli_pair *nxt)
 {
-    serv_cli_pair   *nw_pair = (serv_cli_pair *) malloc(sizeof(serv_cli_pair));
+    svc_cli_pair   *new_pair = (svc_cli_pair *) malloc(sizeof(svc_cli_pair));
 
-    nw_pair->b_client = client;
-    nw_pair->b_service = service;
-    nw_pair->next = nxt;
+    new_pair->b_client = client;
+    new_pair->b_service = service;
+    new_pair->next = nxt;
 
-    return nw_pair;
+    return new_pair;
 }
 
 
@@ -129,12 +129,12 @@ new_serv_cli_pair(struct bufferevent *client, struct bufferevent *service, serv_
 service_pack* 
 new_null_service_package() 
 {
-    service_pack    *nw_serv = (service_pack *) malloc(sizeof(service_pack));
+    service_pack    *new_serv = (service_pack *) malloc(sizeof(service_pack));
 
-    nw_serv->serv = NULL;
-    nw_serv->pair = NULL;
+    new_serv->serv = NULL;
+    new_serv->pair = NULL;
 
-    return nw_serv;
+    return new_serv;
 }
 
 /* 
@@ -142,14 +142,14 @@ new_null_service_package()
  * returns a pointer to the new service_package 
  */
 service_pack* 
-new_service_package(service *srvs, serv_cli_pair *par) 
+new_service_package(service *svc, svc_cli_pair *par) 
 {
-    service_pack    *nw_serv = (service_pack *) malloc(sizeof(service_pack));
+    service_pack    *new_serv = (service_pack *) malloc(sizeof(service_pack));
 
-    nw_serv->serv = srvs;
-    nw_serv->pair = par;
+    new_serv->serv = svc;
+    new_serv->pair = par;
 
-    return nw_serv;
+    return new_serv;
 }
 
 /* 
@@ -160,39 +160,39 @@ new_service_package(service *srvs, serv_cli_pair *par)
 void 
 init_services(struct event_base *eBase, service *service_list) 
 {
-    service             *serv_list = (service *) service_list;
+    service             *svc_list = (service *) service_list;
     struct addrinfo     *server = NULL;
     struct addrinfo     *hints = NULL;
 
-    while (serv_list != NULL) {
+    while (svc_list != NULL) {
         char ip_addr[16], port_num[6];
         int i = 0; 
         int j = 0; 
 
-        if (!parse_address(serv_list->monitor, ip_addr, port_num))
-            fprintf(stderr, "Bad address unable to connect to monitor for %s\n", serv_list->name);
+        if (!parse_address(svc_list->monitor, ip_addr, port_num))
+            fprintf(stderr, "Bad address unable to connect to monitor for %s\n", svc_list->name);
         else {
             hints =  set_criteria_addrinfo();
             i = getaddrinfo(ip_addr, port_num, hints, &server);
 
             if (i != 0){                                                         
                 fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(i));
-                serv_list = serv_list->next;
+                svc_list = svc_list->next;
                 continue;
             } 
 
-            serv_list->b_monitor = bufferevent_socket_new(eBase, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST); 
-            bufferevent_setcb(serv_list->b_monitor, monitor_read_cb, NULL, event_cb, service_list); 
+            svc_list->b_monitor = bufferevent_socket_new(eBase, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST); 
+            bufferevent_setcb(svc_list->b_monitor, monitor_read_cb, NULL, event_cb, service_list); 
 
-            if(bufferevent_socket_connect(serv_list->b_monitor, server->ai_addr, server->ai_addrlen) != 0) { 
+            if(bufferevent_socket_connect(svc_list->b_monitor, server->ai_addr, server->ai_addrlen) != 0) { 
                 fprintf(stderr, "Error connecting to monitor\n"); 
-                bufferevent_free(serv_list->b_monitor); 
+                bufferevent_free(svc_list->b_monitor); 
             } 
 
-            bufferevent_enable(serv_list->b_monitor, EV_READ|EV_WRITE);
-            bufferevent_write(serv_list->b_monitor, serv_list->name, sizeof(serv_list->name));
+            bufferevent_enable(svc_list->b_monitor, EV_READ|EV_WRITE);
+            bufferevent_write(svc_list->b_monitor, svc_list->name, sizeof(svc_list->name));
         }
-        serv_list = serv_list->next;
+        svc_list = svc_list->next;
     }
 }
 
@@ -201,31 +201,31 @@ init_services(struct event_base *eBase, service *service_list)
  * for each service in the list 
  */
 void 
-init_service_listeners(struct event_base *eBase, service *serv_list) 
+init_service_listeners(struct event_base *eBase, service *svc_list) 
 {
     int                 port_no;
-    struct sockaddr_in  serv_addr;
+    struct sockaddr_in  svc_addr;
     struct in_addr      *inp = (struct in_addr *) malloc (sizeof(struct in_addr));
 
-    while (serv_list != NULL) {
+    while (svc_list != NULL) {
         char ip_addr[ip_len], port_num[port_len];
 
-        if (!parse_address(serv_list->listen, ip_addr, port_num)) {
-            fprintf(stderr, "Bad address unable listen for clients for service %s\n", serv_list->name);
+        if (!parse_address(svc_list->listen, ip_addr, port_num)) {
+            fprintf(stderr, "Bad address unable listen for clients for service %s\n", svc_list->name);
         } else {
             port_no = atoi(port_num);
             inet_aton(ip_addr, inp); 
-            memset(&serv_addr, 0, sizeof(serv_addr));
-            serv_addr.sin_family = AF_INET;
-            serv_addr.sin_addr.s_addr = (*inp).s_addr; 
-            serv_addr.sin_port = htons(port_no); 
-            serv_list->listener = evconnlistener_new_bind(eBase, client_connect_cb, serv_list, 
+            memset(&svc_addr, 0, sizeof(svc_addr));
+            svc_addr.sin_family = AF_INET;
+            svc_addr.sin_addr.s_addr = (*inp).s_addr; 
+            svc_addr.sin_port = htons(port_no); 
+            svc_list->listener = evconnlistener_new_bind(eBase, client_connect_cb, svc_list, 
                                                           LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, 
-                                                         -1, (struct sockaddr *) &serv_addr, sizeof(serv_addr)); 
-            if (!serv_list->listener)
+                                                         -1, (struct sockaddr *) &svc_addr, sizeof(svc_addr)); 
+            if (!svc_list->listener)
                 printf("Couldn't create Listener\n");
         }
-        serv_list = serv_list->next;
+        svc_list = svc_list->next;
     }
 }
 
@@ -251,17 +251,17 @@ set_criteria_addrinfo()
  * frees the monitor buffer, frees the client list, and then frees the node.  
  */
 void 
-free_all_service_nodes(service *serv_list)
+free_all_service_nodes(service *svc_list)
 {
-    service         *temp = serv_list;
+    service         *temp = svc_list;
 
-    while (serv_list != NULL) {
-        bufferevent_free(serv_list->b_monitor);
-        free_pair_list(serv_list->client_list);
-        evconnlistener_free(serv_list->listener);
-        serv_list = serv_list->next;
+    while (svc_list != NULL) {
+        bufferevent_free(svc_list->b_monitor);
+        free_pair_list(svc_list->client_list);
+        evconnlistener_free(svc_list->listener);
+        svc_list = svc_list->next;
         free(temp);
-        temp = serv_list;
+        temp = svc_list;
     }
 }
 
@@ -270,9 +270,9 @@ free_all_service_nodes(service *serv_list)
  * buffer events and then frees the node, for each node in the linked list. 
  */
 void 
-free_pair_list(serv_cli_pair *pair)
+free_pair_list(svc_cli_pair *pair)
 {
-    serv_cli_pair   *temp = pair;
+    svc_cli_pair   *temp = pair;
 
     while (pair != NULL){
         bufferevent_free(pair->b_client);
