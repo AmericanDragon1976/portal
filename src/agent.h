@@ -40,7 +40,7 @@ typedef struct hook_path_pair {
 typedef struct service_list {
     struct service_list         *next;
     char                        name[svc_name_len];
-    hook_path_pair              *command_lst;
+    hook_path_pair              *hook_list;
 } svc_list;
 
 typedef struct buffer_list {
@@ -53,39 +53,18 @@ typedef struct {
     buffer_list *list_of_buffer_events;
 } list_heads;
 
-void 
-usage(); 
+void usage(); 
+bool validate_args(int argc, char **argv);
+svc_list* new_null_svc_list();
+svc_list* new_svc_list(svc_list *nxt, hook_path_pair *hook_list_head);
+hook_path_pair* new_null_hook_path_pair();
+hook_path_pair* new_hook_path_pair(hook_path_pair *nxt);
+bool parse_address(char *address_to_parse, char *ip_address, char* port_number);
+void listen_for_monitors(struct event_base *base, struct evconnlistener *listner, list_heads *heads);
+void init_signals(struct event_base event_loop);
+void free_lists_memory(list_heads *heads);
+void free_service_nodes(svc_list *service_list);
+void free_command_list(hook_path_pair *commands);
+void free_buffers(buffer_list *bevs);
 
-bool 
-validate_args(int argc, char **argv);
-
-svc_list*
-new_null_svc_list();
-
-svc_list*
-new_svc_list(svc_list *nxt, hook_path_pair *command_lst_head);
-
-hook_path_pair*
-new_null_hook_path_pair();
-
-hook_path_pair*
-new_hook_path_pair(hook_path_pair *nxt);
-
-bool 
-parse_address(char *address_to_parse, char *ip_address, char* port_number);
-
-void
-listen_for_monitors(struct event_base *base, struct evconnlistener *listner, list_heads *heads);
-
-void
-free_lists_memory(list_heads *heads);
-
-void 
-free_service_nodes(svc_list *service_list);
-
-void 
-free_command_list(hook_path_pair *commands);
-
-void 
-free_buffers(buffer_list *bevs);
 #endif

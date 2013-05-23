@@ -136,8 +136,8 @@ parse_config_file(char *buffer, int len)
             j = 0;
             bzero(&text, file_name_len);
 
-            temp_hook_list->next = current_node->command_lst;
-            current_node->command_lst = temp_hook_list;
+            temp_hook_list->next = current_node->hook_list;
+            current_node->hook_list = temp_hook_list;
 
             if (i < len){
                 for (; buffer[i] == ' '; i++)

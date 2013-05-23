@@ -8,6 +8,6 @@ char*
 read_file(char *name, int len);
 
 svc_list* 
-parse_config_file(char *buff, int len);
+parse_config_file(char *name);
 
 #endif

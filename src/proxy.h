@@ -45,9 +45,9 @@ typedef struct service {
     struct                  service *next;
     char                    listen[complete_address_len];    // listen for clients on this address
     char                    monitor[complete_address_len];   // connect to monitor programm at the address
-    char                    serv[complete_address_len];      // address to connect service to
+    char                    svc[complete_address_len];      // address to connect service to
     struct evconnlistener   *listener;
-    struct bufferevent      *b_monitor;
+    struct bufferevent      *monitor_buffer_event;
     svc_client_pair         *client_list;
 } service;
 
@@ -59,21 +59,22 @@ typedef struct service {
  * caused a callback to be called. 
  */
 typedef struct service_package {
-    service           *serv;
+    service           *svc;
     svc_client_pair   *pair;
 } service_pack;
 
 void usage ();
 bool validate_args(int argc, char **argv);
 service* new_null_service_node();
-service* new_svcice_node(service *nxt, struct evconnlistener *lstnr, struct bufferevent *bevm, svc_client_pair *scp);
+service* new_service_node(service *next, struct evconnlistener *listener, struct bufferevent *buffer_event, svc_client_pair *scp);
 svc_client_pair* new_null_svc_client_pair();
-svc_client_pair* new_svc_client_pair(struct bufferevent *client, struct bufferevent *service, svc_client_pair *nxt);
+svc_client_pair* new_svc_client_pair(struct bufferevent *client, struct bufferevent *service, svc_client_pair *next);
 service_pack* new_null_service_package();
-service_pack* new_svcice_package(service *srvs, svc_client_pair *par);
-void init_services (struct event_base *eBase, service *svc_list);
-void init_service_listeners(struct event_base *eBase, service *svc_list);
+service_pack* new_svcice_package(service *svc, svc_client_pair *pair);
+void init_services (struct event_base *event_loop, service *svc_list);
+void init_service_listeners(struct event_base *event_loop, service *svc_list);
 addrinfo* set_criteria_addrinfo();
+void init_signals(event_base event_loop);
 void free_all_service_nodes (service *svc_list);
 void free_pair_list(svc_client_pair *pair);
 

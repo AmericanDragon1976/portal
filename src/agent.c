@@ -38,12 +38,12 @@ validate_args(int argc, char **argv)
 svc_list*
 new_null_svc_list()
 {
-    svc_list        *nw_svc_list = (svc_list *) malloc(sizeof(svc_list));
+    svc_list        *new_svc_list = (svc_list *) malloc(sizeof(svc_list));
 
-    nw_svc_list->next = NULL;
-    nw_svc_list->command_lst = NULL;
+    new_svc_list->next = NULL;
+    new_svc_list->hook_list = NULL;
 
-    return (nw_svc_list);
+    return (new_svc_list);
 }
 
 /*
@@ -51,14 +51,14 @@ new_null_svc_list()
  * passed in and returns a pointer to it. 
  */
 svc_list*
-new_svc_list(svc_list *nxt, hook_path_pair *command_lst_head)
+new_svc_list(svc_list *next, hook_path_pair *hook_list_head)
 {
-    svc_list        *nw_svc_list = (svc_list *) malloc(sizeof(svc_list));
+    svc_list        *new_svc_list = (svc_list *) malloc(sizeof(svc_list));
 
-    nw_svc_list->next = nxt;
-    nw_svc_list->command_lst = command_lst_head;
+    new_svc_list->next = next;
+    new_svc_list->hook_list = hook_list_head;
 
-    return (nw_svc_list);
+    return (new_svc_list);
 }
 
 /*
@@ -132,10 +132,10 @@ parse_address(char *address_to_parse, char *ip_address, char* port_number)
  * but will be needed by the cb function, adds to the buffer event list. 
  */
 void
-listen_for_monitors(struct event_base *base, struct evconnlistener *local_listener, list_heads *heads)
+listen_for_monitors(struct event_base *event_loop, struct evconnlistener *local_listener, list_heads *heads)
 {
     char                ip[ip_len], port[port_len];
-    int                 i, port_number;
+    int                 port_number;
     struct sockaddr_in  monitor_address;
     struct in_addr      *inp = (struct in_addr *) malloc(sizeof(struct in_addr));
 
@@ -143,13 +143,12 @@ listen_for_monitors(struct event_base *base, struct evconnlistener *local_listen
         fprintf(stderr, "Bad address agent unable listen for monitor!!\n");
     } else {
         port_number = atoi(port);
-        i = inet_aton(ip, inp);
+        inet_aton(ip, inp);
         memset(&monitor_address, 0, sizeof(monitor_address));
         monitor_address.sin_family = AF_INET;
         monitor_address.sin_addr.s_addr = (*inp).s_addr;
         monitor_address.sin_port = htons(port_number);
-        local_listener = evconnlistener_new_bind(base, monitor_connect_cb, heads, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, 
-            -1, (struct sockaddr *) &monitor_address, sizeof(monitor_address));
+        local_listener = evconnlistener_new_bind(event_loop, monitor_connect_cb, heads, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &monitor_address, sizeof(monitor_address));
 
         if (!local_listener)
             fprintf(stderr, "Couldn't create listner for monitors.\n");
@@ -158,6 +157,23 @@ listen_for_monitors(struct event_base *base, struct evconnlistener *local_listen
         // event buffers will all call the same call back, will parse out service and execute the hook sent with service on that service.
     }
 }
+
+/*
+ * Recoved the event_loop (event base) and adds an event to it that will trigger 
+ * when a signal is recived. It handles those signals, for the kill signal it frees
+ * all memory and shuts down the event loop instead of simply letting it crash.
+ */
+void init_signals(event_loop)
+{    
+    struct event *signal_event = NULL;
+
+    signal_event = evsignal_new(event_loop, SIGINT, signal_cb, (void *) event_loop);
+    if (!signal_event || event_add(signal_event, NULL) < 0) {
+        fprintf(stderr, "Could not create/add signal event.\n");
+        exit(0);
+    }
+}
+
  /*
  * main
  */
@@ -169,35 +185,29 @@ main (int argc, char **argv)
     FILE                    *file_pointer = NULL;
     list_heads              services_and_buffer_events;
     int                     file_size = 0;
-    struct event_base       *base = NULL;
+    struct event_base       *event_loop = NULL;
     struct event            *signal_event = NULL;
     struct evconnlistener   *listener = NULL;
 
     services_and_buffer_events.list_of_services = NULL;
     services_and_buffer_events.list_of_buffer_events = NULL;
 
-    command_args = argv;
-
-    if (!verify_comnd_ln_args(argc, command_args)) 
+    if (!validate_args(argc, argv)) 
     	usage();
 
-    strcpy(file_name, command_args[argc - 1]);
-    file_size = get_config_file_len(file_name);
-    file_buffer = read_file(file_name, file_size);
-    services_and_buffer_events.list_of_services = parse_config_file(file_buffer, file_size); 
-    free(file_buffer);
+    services_and_buffer_events.list_of_services = parse_config_file(argv[argc - 1]); 
     
-    base = event_base_new();                                
-    listen_for_monitors(base, listener, &services_and_buffer_events);       
+    event_loop = event_base_new();                                
+    listen_for_monitors(event_loop, listener, &services_and_buffer_events);
 
-    signal_event = evsignal_new(base, SIGINT, signal_cb, (void *) base);
+    signal_event = evsignal_new(event_loop, SIGINT, signal_cb, (void *) event_loop);
     if (!signal_event || event_add(signal_event, NULL) < 0) {
         fprintf(stderr, "Could not create/add signal event.\n");
         exit(0);
     }
 
-    event_base_dispatch(base);
+    event_base_dispatch(event_loop);
     evconnlistener_free(listener);
     free_lists_memory(&services_and_buffer_events);
-    event_base_free(base);
+    event_base_free(event_loop);
 }

@@ -24,7 +24,7 @@ monitor_read_cb(struct bufferevent *bev, void *svc_list)
     bzero(text, len); 
     evbuffer_remove(input, text, len); 
 
-    while(current_svc != NULL && current_svc->b_monitor != bev)
+    while(current_svc != NULL && current_svc->monitor_buffer_event != bev)
         current_svc = current_svc->next;
 
     if (strcmp(text, "service not found") == 0) {

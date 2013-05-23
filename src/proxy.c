@@ -18,7 +18,7 @@ void
 timeout_cb(evutil_socket_t fd, short what, void *arg) 
 { 
 /*  service *test = (service *) arg;
-    bufferevent_write(test->b_monitor, test->name, sizeof(test->name));
+    bufferevent_write(test->monitor_buffer_event, test->name, sizeof(test->name));
     printf("timeout_cb called\n");
     printf("Server up\n");
 */
@@ -66,7 +66,7 @@ new_null_service_node()
 
     new_node->next = NULL;
     new_node->listener = NULL;
-    new_node->b_monitor = NULL;
+    new_node->monitor_buffer_event = NULL;
     new_node->client_list = NULL;
 
     return (new_node);
@@ -78,14 +78,14 @@ new_null_service_node()
  * node. 
  */
 service* 
-new_svcice_node(service *nxt, struct evconnlistener *lstnr, 
+new_service_node(service *nxt, struct evconnlistener *lstnr, 
                struct bufferevent *bevm, svc_client_pair *scp) 
 {
     service     *new_node = (service *) calloc(1, sizeof(service));
 
     new_node->next = nxt;
     new_node->listener = lstnr;
-    new_node->b_monitor = bevm;
+    new_node->monitor_buffer_event = bevm;
     new_node->client_list = scp;
 
     return new_node;
@@ -158,7 +158,7 @@ new_svcice_package(service *svc, svc_client_pair *par)
  *   requests service addr.
  */
 void 
-init_services(struct event_base *eBase, service *service_list) 
+init_services(struct event_base *event_loop, service *service_list) 
 {
     service             *svc_list = (service *) service_list;
     struct addrinfo     *server = NULL;
@@ -181,16 +181,16 @@ init_services(struct event_base *eBase, service *service_list)
                 continue;
             } 
 
-            svc_list->b_monitor = bufferevent_socket_new(eBase, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST); 
-            bufferevent_setcb(svc_list->b_monitor, monitor_read_cb, NULL, event_cb, service_list); 
+            svc_list->monitor_buffer_event = bufferevent_socket_new(event_loop, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST); 
+            bufferevent_setcb(svc_list->monitor_buffer_event, monitor_read_cb, NULL, event_cb, service_list); 
 
-            if(bufferevent_socket_connect(svc_list->b_monitor, server->ai_addr, server->ai_addrlen) != 0) { 
+            if(bufferevent_socket_connect(svc_list->monitor_buffer_event, server->ai_addr, server->ai_addrlen) != 0) { 
                 fprintf(stderr, "Error connecting to monitor\n"); 
-                bufferevent_free(svc_list->b_monitor); 
+                bufferevent_free(svc_list->monitor_buffer_event); 
             } 
 
-            bufferevent_enable(svc_list->b_monitor, EV_READ|EV_WRITE);
-            bufferevent_write(svc_list->b_monitor, svc_list->name, sizeof(svc_list->name));
+            bufferevent_enable(svc_list->monitor_buffer_event, EV_READ|EV_WRITE);
+            bufferevent_write(svc_list->monitor_buffer_event, svc_list->name, sizeof(svc_list->name));
         }
         svc_list = svc_list->next;
     }
@@ -201,9 +201,9 @@ init_services(struct event_base *eBase, service *service_list)
  * for each service in the list 
  */
 void 
-init_service_listeners(struct event_base *eBase, service *svc_list) 
+init_service_listeners(struct event_base *event_loop, service *svc_list) 
 {
-    int                 port_no;
+    int                 port_number_as_int;
     struct sockaddr_in  svc_address;
     struct in_addr      *inp = (struct in_addr *) malloc (sizeof(struct in_addr));
 
@@ -213,19 +213,33 @@ init_service_listeners(struct event_base *eBase, service *svc_list)
         if (!parse_address(svc_list->listen, ip_address, port_number)) {
             fprintf(stderr, "Bad address unable listen for clients for service %s\n", svc_list->name);
         } else {
-            port_no = atoi(port_number);
+            port_number_as_int = atoi(port_number);
             inet_aton(ip_address, inp); 
             memset(&svc_address, 0, sizeof(svc_address));
             svc_address.sin_family = AF_INET;
             svc_address.sin_addr.s_addr = (*inp).s_addr; 
-            svc_address.sin_port = htons(port_no); 
-            svc_list->listener = evconnlistener_new_bind(eBase, client_connect_cb, svc_list, 
-                                                          LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, 
-                                                         -1, (struct sockaddr *) &svc_address, sizeof(svc_address)); 
+            svc_address.sin_port = htons(port_number_as_int); 
+            svc_list->listener = evconnlistener_new_bind(event_loop, client_connect_cb, svc_list, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &svc_address, sizeof(svc_address)); 
             if (!svc_list->listener)
                 printf("Couldn't create Listener\n");
         }
         svc_list = svc_list->next;
+    }
+}
+
+/*
+ * Recoved the event_loop (event base) and adds an event to it that will trigger 
+ * when a signal is recived. It handles those signals, for the kill signal it frees
+ * all memory and shuts down the event loop instead of simply letting it crash.
+ */
+void init_signals(event_loop)
+{    
+    struct event *signal_event = NULL;
+
+    signal_event = evsignal_new(event_loop, SIGINT, signal_cb, (void *) event_loop);
+    if (!signal_event || event_add(signal_event, NULL) < 0) {
+        fprintf(stderr, "Could not create/add signal event.\n");
+        exit(0);
     }
 }
 
@@ -256,7 +270,7 @@ free_all_service_nodes(service *svc_list)
     service         *temp = svc_list;
 
     while (svc_list != NULL) {
-        bufferevent_free(svc_list->b_monitor);
+        bufferevent_free(svc_list->monitor_buffer_event);
         free_pair_list(svc_list->client_list);
         evconnlistener_free(svc_list->listener);
         svc_list = svc_list->next;
@@ -306,22 +320,15 @@ main(int argc, char **argv)
     init_services(event_loop, service_list);
     init_service_listeners(event_loop, service_list); 
 
-    // This time out event only needed for testing, can be removed in final version
- /*   struct timeval      five_seconds = {5, 0};
+/* 
+    This time out event only needed for testing, can be removed in final version
+    struct timeval      five_seconds = {5, 0};
     struct event        *to_event; 
 
     to_event = event_new(event_loop, -1, EV_PERSIST, timeout_cb, service_list);
     event_add(to_event, &five_seconds);
 */
-
-    // init_signals();
-    // this would be in the init_signals() function
-    // kill_event = evsignal_new(event_loop, SIGINT, signal_cb, (void *) event_loop);
-    // if (!kill_event || event_add(kill_event, NULL) < 0) {
-    //     fprintf(stderr, "Could not create/add signal event.\n");
-    //     exit(0);
-    // }
-
+    init_signals(event_loop);
     event_base_dispatch(event_loop);
     free_all_service_nodes(service_list);
     event_base_free(event_loop);
