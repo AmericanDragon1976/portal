@@ -27,8 +27,8 @@ int
 get_config_file_len(char *name)
 {
     int     file_len = 0;
-    char    *buffer;
-    FILE    *file_pointer;
+    char    *buffer = NULL;
+    FILE    *file_pointer = NULL;
 
     file_pointer = fopen(name, "r");
 
@@ -52,8 +52,8 @@ char*
 read_file(char *name, int len) 
 {
     char    *buffer = (char *) malloc(sizeof(char) * (len));
-    FILE    *file_pointer;
-    size_t  result;
+    FILE    *file_pointer = NULL;
+    size_t  result = NULL;
 
     file_pointer = fopen(name, "r");
 

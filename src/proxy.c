@@ -31,9 +31,9 @@ void
 usage()
 {
     printf("Usage is as follows: \n");
-    printf("    portal-proxy space seperated flags /path/to/config/file\n");
+    printf("    proxy space seperated flags /path/to/config/file\n");
     printf("Example: \n");
-    printf("    portal-proxy -C ../../deps/config.txt\n");
+    printf("    proxy -C ../../deps/config.txt\n");
     exit(0);
 }
 
