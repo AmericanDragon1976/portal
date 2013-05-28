@@ -136,7 +136,7 @@ listen_for_monitors(struct event_base *event_loop, struct evconnlistener *local_
 {
     char                ip[ip_len], port[port_len];
     int                 port_number;
-    struct sockaddr_in  monitor_address;
+    struct sockaddr_in  address_of_monitor;
     struct in_addr      *inp = (struct in_addr *) malloc(sizeof(struct in_addr));
 
     if (!parse_address(monitor_address, ip, port)){
@@ -144,11 +144,11 @@ listen_for_monitors(struct event_base *event_loop, struct evconnlistener *local_
     } else {
         port_number = atoi(port);
         inet_aton(ip, inp);
-        memset(&monitor_address, 0, sizeof(monitor_address));
-        monitor_address.sin_family = AF_INET;
-        monitor_address.sin_addr.s_addr = (*inp).s_addr;
-        monitor_address.sin_port = htons(port_number);
-        local_listener = evconnlistener_new_bind(event_loop, monitor_connect_cb, heads, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &monitor_address, sizeof(monitor_address));
+        memset(&address_of_monitor, 0, sizeof(address_of_monitor));
+        address_of_monitor.sin_family = AF_INET;
+        address_of_monitor.sin_addr.s_addr = (*inp).s_addr;
+        address_of_monitor.sin_port = htons(port_number);
+        local_listener = evconnlistener_new_bind(event_loop, monitor_connect_cb, heads, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &address_of_monitor, sizeof(address_of_monitor));
 
         if (!local_listener)
             fprintf(stderr, "Couldn't create listner for monitors.\n");
@@ -163,7 +163,7 @@ listen_for_monitors(struct event_base *event_loop, struct evconnlistener *local_
  * when a signal is recived. It handles those signals, for the kill signal it frees
  * all memory and shuts down the event loop instead of simply letting it crash.
  */
-void init_signals(event_loop)
+void init_signals(struct event_base *event_loop)
 {    
     struct event *signal_event = NULL;
 
@@ -173,6 +173,11 @@ void init_signals(event_loop)
         exit(0);
     }
 }
+
+/*
+ * Recives a pointer to the structure holding a pointer to the linked lists and frees them. 
+ */
+void free_lists_memory(list_heads *heads){}
 
  /*
  * main
@@ -195,12 +200,7 @@ main (int argc, char **argv)
     event_loop = event_base_new();                                
     listen_for_monitors(event_loop, listener, &services_and_buffer_events);
 
-    signal_event = evsignal_new(event_loop, SIGINT, signal_cb, (void *) event_loop);
-    if (!signal_event || event_add(signal_event, NULL) < 0) {
-        fprintf(stderr, "Could not create/add signal event.\n");
-        exit(0);
-    }
-
+    init_signals(event_loop);
     event_base_dispatch(event_loop);
     evconnlistener_free(listener);
     free_lists_memory(&services_and_buffer_events);

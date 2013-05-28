@@ -17,7 +17,7 @@ monitor_read_cb(struct bufferevent *bev, void *svc_list)
     struct      evbuffer *input = bufferevent_get_input(bev);
     int         len, i, j, k;
     bool        now_addr = false;
-    char        *text, temp_name[svc_nm_siz], temp_address[complete_address_len];
+    char        *text, temp_name[svc_name_len], temp_address[complete_address_len];
 
     len = evbuffer_get_length(input);
     text = (char *) malloc(len);

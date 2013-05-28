@@ -232,7 +232,7 @@ init_service_listeners(struct event_base *event_loop, service *svc_list)
  * when a signal is recived. It handles those signals, for the kill signal it frees
  * all memory and shuts down the event loop instead of simply letting it crash.
  */
-void init_signals(event_loop)
+void init_signals(struct event_base *event_loop)
 {    
     struct event *signal_event = NULL;
 

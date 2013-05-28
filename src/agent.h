@@ -61,7 +61,7 @@ hook_path_pair* new_null_hook_path_pair();
 hook_path_pair* new_hook_path_pair(hook_path_pair *nxt);
 bool parse_address(char *address_to_parse, char *ip_address, char* port_number);
 void listen_for_monitors(struct event_base *base, struct evconnlistener *listner, list_heads *heads);
-void init_signals(struct event_base event_loop);
+void init_signals(struct event_base *event_loop);
 void free_lists_memory(list_heads *heads);
 void free_service_nodes(svc_list *service_list);
 void free_command_list(hook_path_pair *commands);

@@ -20,11 +20,11 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
-#define svc_name_len    30      // length of all char arrays holding service names
+#define svc_name_len            30      // length of all char arrays holding service names
 #define complete_address_len    22      // length of char arrays holding address a.d.c.e:portnum
-#define file_name_len   100     // length of file names
-#define ip_len          16      // length of ip portion of address
-#define port_len        6       // length of port number portion of address
+#define file_name_len           100     // length of file names
+#define ip_len                  16      // length of ip portion of address
+#define port_len                6       // length of port number portion of address
 
 /* 
  * Keeps referances to the incoming connection from a clinent and the outgoing 
@@ -73,8 +73,8 @@ service_pack* new_null_service_package();
 service_pack* new_svcice_package(service *svc, svc_client_pair *pair);
 void init_services (struct event_base *event_loop, service *svc_list);
 void init_service_listeners(struct event_base *event_loop, service *svc_list);
-addrinfo* set_criteria_addrinfo();
-void init_signals(event_base event_loop);
+struct addrinfo* set_criteria_addrinfo();
+void init_signals(struct event_base *event_loop);
 void free_all_service_nodes (service *svc_list);
 void free_pair_list(svc_client_pair *pair);
 
