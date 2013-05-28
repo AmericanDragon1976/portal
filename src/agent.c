@@ -219,6 +219,23 @@ free_buffers(buffer_list *buffer_events)
     }
 }
 
+
+/*
+ * Recives a pointer to a linked list of commands and frees all memory associated
+ * with that list. 
+ */
+void 
+free_command_list(hook_path_pair *commands)
+{
+    hook_path_pair  *temp = commands;
+
+    while (commands != NULL){
+        commands = commands->next;
+        free(temp);
+        temp = commands;
+    }
+}
+
  /*
  * main
  */
