@@ -14,7 +14,8 @@ new_null_service()
 
     new_svc->listener = NULL;
     new_svc->monitor_buffer_event = NULL;
-    new_svc->client_list = NULL;
+    new_svc->list_of_clients = (client_list *) malloc(sizeof(client_list));
+    new_svc->list_of_clients->head = NULL;
 
     return (new_svc);
 }
@@ -25,13 +26,14 @@ new_null_service()
  * node. 
  */
 service* 
-new_service(struct evconnlistener *listener, struct bufferevent *moniter_buffer_event, svc_client_pair *pair) 
+new_service(struct evconnlistener *listener, struct bufferevent *moniter_buffer_event, svc_client_node *node) 
 {
     service     *new_node = (service *) calloc(1, sizeof(service));
 
     new_node->listener = listener;
     new_node->monitor_buffer_event = moniter_buffer_event;
-    new_node->client_list = pair;
+    new_node->list_of_clients = (client_list *) malloc(sizeof(client_list));
+    new_svc->list_of_clients->head = node;
 
     return new_node;
 }
@@ -46,7 +48,6 @@ new_null_svc_client_pair ()
 
     new_pair->client_buffer_event = NULL;
     new_pair->service_buffer_event = NULL;
-    new_pair->next = NULL;
 
     return (new_pair);
 }
@@ -56,13 +57,12 @@ new_null_svc_client_pair ()
  * Allocates memeory for a new svc_client_pair and sets their members inicial values as supplied by caller 
  */
 svc_client_pair* 
-new_svc_client_pair(struct bufferevent *client, struct bufferevent *service, svc_client_pair *next)
+new_svc_client_pair(struct bufferevent *client, struct bufferevent *service)
 {
     svc_client_pair   *new_pair = (svc_client_pair *) malloc(sizeof(svc_client_pair));
 
     new_pair->client_buffer_event = client;
     new_pair->service_buffer_event = service;
-    new_pair->next = next;
 
     return (new_pair);
 }
@@ -98,21 +98,43 @@ new_service_package(service *svc, svc_client_pair *pair)
     return (new_svc_pack);
 }
 
+svc_client_node* 
+new_null_svc_client_node()
+{
+	svc_client_node 	*new_svc_client_node = (svc_client_node *) malloc(sizeof(svc_client_node));
+
+	new_svc_client_node->pair = NULL;
+	new_svc_client_node->next = NULL;
+
+	return (new_svc_client_node);
+}
+
+svc_client_node* 
+new_svc_client_node(svc_client_pair *pair, svc_client_node *next)
+{
+	svc_client_node 	*new_svc_client_node = (svc_client_node *) malloc(sizeof(svc_client_node));
+
+	new_svc_client_node->pair = pair;
+	new_svc_client_node->next = next;
+
+	return (new_svc_client_node);
+}
+
 /*
  * Recives a pointer to a linked list of service client pairs. Frees both 
  * buffer events and then frees the node, for each node in the linked list. 
  */
 void 
-free_pair_list(svc_client_pair *pair)
+free_pair_list(client_list list)
 {
-    svc_client_pair   *temp = pair;
+    svc_client_node   *temp = list->head;
 
-    while (pair != NULL){
-        bufferevent_free(pair->client_buffer_event);
-        bufferevent_free(pair->service_buffer_event);
-        pair = pair->next;
+    while (list->head != NULL){
+        bufferevent_free(temp->client_buffer_event);
+        bufferevent_free(temp->service_buffer_event);
+        list->head = list->head->next;
         free(temp);
-        temp = pair;
+        temp = list->head;
     }
 }
 

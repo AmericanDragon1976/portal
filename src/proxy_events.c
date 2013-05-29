@@ -86,18 +86,18 @@ client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct so
     while (current_svc < list_len && strcmp(svc_list[current_svc].name, "none") != 0) { 
         if(svc_list[current_service].listener == listener) {
             // create a new Service Client Pair and add it to the Client List
-            svc_client_pair *proxy_pair = new_null_svc_client_pair();
+            svc_client_node *proxy_pair = new_null_svc_client_node();
 
             // create event buffers to proxy client
             proxy_pair->client_buffer_event =  bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
             proxy_pair->service_buffer_event = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
-            current_svc_pack = new_svcice_package(current_service, proxy_pair);
+            current_svc_pack = new_service_package(svc_list[current_svc], proxy_pair);
             int i = 0; 
             int j = 0; 
             bool port_now = false;
 
-            if (!parse_address(current_service->svc, ip_address, port_number))
-                fprintf(stderr, "Bad address unable to connect client to %s\n", current_service->name);
+            if (!parse_address(svc_list[current_svc].svc, ip_address, port_number))
+                fprintf(stderr, "Bad address unable to connect client to %s\n", svc_list[current_svc].name);
             else {
                 hints = set_criteria_addrinfo (); 
                 i = getaddrinfo(ip_address, port_number, hints, &svc_address);
@@ -123,12 +123,12 @@ client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct so
                 bufferevent_enable(proxy_pair->service_buffer_event, EV_READ|EV_WRITE);
     
                 // add pair of buffer events to client_list for this service
-                proxy_pair->next = current_service->client_list;
-                current_service->client_list = proxy_pair;
+                proxy_pair->next = svc_list[current_svc].client_list;
+                svc_list[current_svc].client_list = proxy_pair;
             } 
         }
 
-        current_service = current_service->next;
+        current_svc++;
     }
 }
 
@@ -154,7 +154,7 @@ proxy_read_cb(struct bufferevent *buffer_event, void *srv_pck)
 
     if(!partner){ 
 // no partner free the bufferevents free associated memory and remove pair from client_listand return 
-        svc_client_pair *temp = svc_pack->svc->client_list;
+        svc_client_pair *temp = svc_pack->svc.client_list;
 
         if (temp = svc_pack->pair) {        // the trigger buffer is part of the first client service pair in the list
             svc_pack->svc->client_list = temp->next;

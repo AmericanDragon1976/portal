@@ -13,7 +13,7 @@ typedef struct service {
     char                    svc[complete_address_len];       // address to connect service to
     struct evconnlistener   *listener;
     struct bufferevent      *monitor_buffer_event;
-    svc_client_pair         *client_list;
+    client_list             list_of_clients;
 } service;
 
 /* 
@@ -22,9 +22,16 @@ typedef struct service {
  */
 typedef struct svc_client_pair {
     struct bufferevent          *client_buffer_event, *svc_buffer_event;
-    struct svc_client_pair  *next;
 } svc_client_pair;
 
+typedef struct svc_client_node{
+    svc_client_pair         *pair;
+    svc_client_node         *next;
+}svc_client_node;
+
+typedef struct client_list {
+    svc_client_node     *head;
+} client_list;
 /* 
  * Allows a particular pair of connections - client and the service the client 
  * is connected to - and the service they belong to, to be passed as a single 
@@ -40,8 +47,10 @@ typedef struct svc_package {
 service* new_null_svc();
 service* new_svc(service *next, struct evconnlistener *listener, struct bufferevent *buffer_event, svc_client_pair *pair);
 svc_client_pair* new_null_svc_client_pair();
-svc_client_pair* new_svc_client_pair(struct bufferevent *client, struct bufferevent *service, svc_client_pair *next);
+svc_client_pair* new_svc_client_pair(struct bufferevent *client, struct bufferevent *service);
 svc_pack* new_null_svc_package();
+svc_client_node* new_null_svc_client_node();
+svc_client_node* new_svc_client_node(svc_client_pair *pair, svc_client_node *next);
 svc_pack* new_svc_package(service *svc, svc_client_pair *pair);
 void free_pair_list(svc_client_pair *pair);
 
