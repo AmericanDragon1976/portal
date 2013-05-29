@@ -86,12 +86,12 @@ client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct so
     while (current_svc < list_len && strcmp(svc_list[current_svc].name, "none") != 0) { 
         if(svc_list[current_service].listener == listener) {
             // create a new Service Client Pair and add it to the Client List
-            svc_client_node *proxy_pair = new_null_svc_client_node();
+            svc_client_node *proxy_pair_node = new_null_svc_client_node();
 
             // create event buffers to proxy client
             proxy_pair->client_buffer_event =  bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
             proxy_pair->service_buffer_event = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
-            current_svc_pack = new_service_package(svc_list[current_svc], proxy_pair);
+            current_svc_pack = new_service_package(svc_list[current_svc], proxy_pair_node->pair);
             int i = 0; 
             int j = 0; 
             bool port_now = false;
@@ -107,24 +107,24 @@ client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct so
                     return;
                 }
 
-                bufferevent_setcb(proxy_pair->client_buffer_event, proxy_read_cb, NULL, event_cb, current_svc_pack); 
-                bufferevent_enable(proxy_pair->client_buffer_event, EV_READ|EV_WRITE);
+                bufferevent_setcb(proxy_pair_node->pair->client_buffer_event, proxy_read_cb, NULL, event_cb, current_svc_pack); 
+                bufferevent_enable(proxy_pair_node->pair->client_buffer_event, EV_READ|EV_WRITE);
 
-                if (bufferevent_socket_connect(proxy_pair->service_buffer_event, svc_address->ai_addr, svc_address->ai_addrlen) != 0) { 
+                if (bufferevent_socket_connect(proxy_pair_node->pair->service_buffer_event, svc_address->ai_addr, svc_address->ai_addrlen) != 0) { 
                     fprintf(stderr, "Error Connecting to service\n");
                     char error_message[] = "Unable to connect, try again;";
-                    bufferevent_write(proxy_pair->client_buffer_event, &error_message, sizeof(error_message));
-                    bufferevent_free(proxy_pair->client_buffer_event);
-                    bufferevent_free(proxy_pair->service_buffer_event);
+                    bufferevent_write(proxy_pair_node->pair->client_buffer_event, &error_message, sizeof(error_message));
+                    bufferevent_free(proxy_pair_node->pair->client_buffer_event);
+                    bufferevent_free(proxy_pair_node->pair->service_buffer_event);
                 return;
                 }
 
-                bufferevent_setcb(proxy_pair->service_buffer_event, proxy_read_cb, NULL, event_cb, current_svc_pack);
-                bufferevent_enable(proxy_pair->service_buffer_event, EV_READ|EV_WRITE);
+                bufferevent_setcb(proxy_pair_node->pair->service_buffer_event, proxy_read_cb, NULL, event_cb, current_svc_pack);
+                bufferevent_enable(proxy_pair_node->pair->service_buffer_event, EV_READ|EV_WRITE);
     
                 // add pair of buffer events to client_list for this service
-                proxy_pair->next = svc_list[current_svc].client_list;
-                svc_list[current_svc].client_list = proxy_pair;
+                proxy_pair_node->next = svc_list[current_svc]->list_of_clients->head;
+                svc_list[current_svc]->list_of_clients->head = proxy_pair_node;
             } 
         }
 

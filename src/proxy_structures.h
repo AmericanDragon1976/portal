@@ -24,11 +24,17 @@ typedef struct svc_client_pair {
     struct bufferevent          *client_buffer_event, *svc_buffer_event;
 } svc_client_pair;
 
+/*
+ * Each node points to the next node in the list, and has a pointer to the instance of the structure holding the acutal data.
+ */
 typedef struct svc_client_node{
     svc_client_pair         *pair;
     svc_client_node         *next;
 }svc_client_node;
 
+/*
+ *This structure is a list of clients, head points to the first node in the list.
+ */
 typedef struct client_list {
     svc_client_node     *head;
 } client_list;
