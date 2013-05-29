@@ -7,7 +7,9 @@
 #include "proxy.h"
 #include "proxy_config.h"
 #include "proxy_events.h"
+#include "proxy_structures.h"
 
+int list_size;
 
 /* 
  * Called by to_ event every time it times out. They body is commented out
@@ -37,6 +39,22 @@ usage()
     exit(0);
 }
 
+void
+initalize_array(service_list, list_size)
+{
+    int i = 0;
+
+    for (i = 0; i < list_size; i++){
+        service_list[i].name = "none";
+        service_list[i].listen = "0.0.0.0:0000";
+        service_list[i].monitor = "0.0.0.0:0000";
+        service_list[i].svc = "0.0.0.0:0000";
+        service_list[i].listener = NULL;
+        service_list[i].monitor_buffer_event = NULL;
+        service_list[i].client_list = NULL;
+    }
+}
+
 /* 
  * Verifies the command line arguments. The arguments must include flag -C and 
  * the path/to/comfig.txt. If specific uses of the -C flag or other flags are 
@@ -56,120 +74,23 @@ validate_args(int argc, char **argv)
 }
 
 /* 
- * Allocates memory for a new service node and inicilizes all pointer members 
- * to NULL, returns a pointer to this new node.
- */
-service* 
-new_null_service_node() 
-{
-    service     *new_node = (service *) calloc(1, sizeof(service));
-
-    new_node->next = NULL;
-    new_node->listener = NULL;
-    new_node->monitor_buffer_event = NULL;
-    new_node->client_list = NULL;
-
-    return (new_node);
-}
-
-/* 
- * Allocates memory for a new service node and inicilizes all pointer members 
- * to the values passed in via parameters,  returns a pointer to this new 
- * node. 
- */
-service* 
-new_service_node(service *nxt, struct evconnlistener *lstnr, 
-               struct bufferevent *bevm, svc_client_pair *scp) 
-{
-    service     *new_node = (service *) calloc(1, sizeof(service));
-
-    new_node->next = nxt;
-    new_node->listener = lstnr;
-    new_node->monitor_buffer_event = bevm;
-    new_node->client_list = scp;
-
-    return new_node;
-}
-
-/*  
- * Allocates memeory for a new svc_client_pair and sets their members inicial values to NULL
- */
-svc_client_pair* 
-new_null_svc_client_pair () {
-    svc_client_pair   *new_pair = (svc_client_pair *) malloc(sizeof(svc_client_pair));
-
-    new_pair->client_buffer_event = NULL;
-    new_pair->service_buffer_event = NULL;
-    new_pair->next = NULL;
-
-    return new_pair;
-}
-
-
-/* 
- * Allocates memeory for a new svc_client_pair and sets their members inicial values as supplied by caller 
- */
-svc_client_pair* 
-new_svc_client_pair(struct bufferevent *client, struct bufferevent *service, svc_client_pair *nxt)
-{
-    svc_client_pair   *new_pair = (svc_client_pair *) malloc(sizeof(svc_client_pair));
-
-    new_pair->client_buffer_event = client;
-    new_pair->service_buffer_event = service;
-    new_pair->next = nxt;
-
-    return new_pair;
-}
-
-
-/* 
- * allocates memory for a new service_package sets all pointers to NULL and returns a pointer to the new
- * service_package 
- */
-service_pack* 
-new_null_service_package() 
-{
-    service_pack    *new_svc = (service_pack *) malloc(sizeof(service_pack));
-
-    new_svc->svc = NULL;
-    new_svc->pair = NULL;
-
-    return new_svc;
-}
-
-/* 
- * allocates memory for a new service_package sets all pointers to the values passed in by parameters and
- * returns a pointer to the new service_package 
- */
-service_pack* 
-new_svcice_package(service *svc, svc_client_pair *par) 
-{
-    service_pack    *new_svc = (service_pack *) malloc(sizeof(service_pack));
-
-    new_svc->svc = svc;
-    new_svc->pair = par;
-
-    return new_svc;
-}
-
-/* 
  * Goes through list of services, and for each service it :
  *   connects to monitor,
  *   requests service addr.
  */
 void 
-init_services(struct event_base *event_loop, service *service_list) 
+init_services(struct event_base *event_loop, service service_list[]) 
 {
-    service             *svc_list = (service *) service_list;
+    int                 current_svc = 0;
     struct addrinfo     *server = NULL;
     struct addrinfo     *hints = NULL;
 
-    while (svc_list != NULL) {
-        char ip_address[16], port_number[6];
+    while (current_svc < list_size && strcmp(svc_list[current_svc].name, "none") != 0) {
+        char ip_address[ip_len], port_number[port_len];
         int i = 0; 
         int j = 0; 
 
-        if (!parse_address(svc_list->monitor, ip_address, port_number))
+        if (!parse_address(svc_list[current_svc].monitor, ip_address, port_number))
             fprintf(stderr, "Bad address unable to connect to monitor for %s\n", svc_list->name);
         else {
             hints =  set_criteria_addrinfo();
@@ -177,22 +98,22 @@ init_services(struct event_base *event_loop, service *service_list)
 
             if (i != 0){                                                         
                 fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(i));
-                svc_list = svc_list->next;
+                current_svc++;
                 continue;
             } 
 
-            svc_list->monitor_buffer_event = bufferevent_socket_new(event_loop, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST); 
-            bufferevent_setcb(svc_list->monitor_buffer_event, monitor_read_cb, NULL, event_cb, service_list); 
+            svc_list[current_svc].monitor_buffer_event = bufferevent_socket_new(event_loop, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST); 
+            bufferevent_setcb(svc_list[current_svc].monitor_buffer_event, monitor_read_cb, NULL, event_cb, service_list); 
 
-            if(bufferevent_socket_connect(svc_list->monitor_buffer_event, server->ai_addr, server->ai_addrlen) != 0) { 
+            if(bufferevent_socket_connect(svc_list[current_svc].monitor_buffer_event, server->ai_addr, server->ai_addrlen) != 0) { 
                 fprintf(stderr, "Error connecting to monitor\n"); 
                 bufferevent_free(svc_list->monitor_buffer_event); 
             } 
 
-            bufferevent_enable(svc_list->monitor_buffer_event, EV_READ|EV_WRITE);
-            bufferevent_write(svc_list->monitor_buffer_event, svc_list->name, sizeof(svc_list->name));
+            bufferevent_enable(svc_list[current_svc].monitor_buffer_event, EV_READ|EV_WRITE);
+            bufferevent_write(svc_list[current_svc].monitor_buffer_event, svc_list[current_svc].name, sizeof(svc_list[current_svc].name));
         }
-        svc_list = svc_list->next;
+        current_svc++;
     }
 }
 
@@ -201,29 +122,30 @@ init_services(struct event_base *event_loop, service *service_list)
  * for each service in the list 
  */
 void 
-init_service_listeners(struct event_base *event_loop, service *svc_list) 
+init_service_listeners(struct event_base *event_loop, service svc_list[]) 
 {
     int                 port_number_as_int;
+    int                 current_svc = 0;
     struct sockaddr_in  svc_address;
-    struct in_addr      *inp = (struct in_addr *) malloc (sizeof(struct in_addr));
+    struct in_addr      *ip_bytes = (struct in_addr *) malloc (sizeof(struct in_addr));
 
-    while (svc_list != NULL) {
+    while (current_svc < list_size && strcmp(svc_list[current_svc].name, "none") != 0) {
         char ip_address[ip_len], port_number[port_len];
 
-        if (!parse_address(svc_list->listen, ip_address, port_number)) {
-            fprintf(stderr, "Bad address unable listen for clients for service %s\n", svc_list->name);
+        if (!parse_address(svc_list[current_svc].listen, ip_address, port_number)) {
+            fprintf(stderr, "Bad address unable listen for clients for service %s\n", svc_list[current_svc].name);
         } else {
             port_number_as_int = atoi(port_number);
-            inet_aton(ip_address, inp); 
+            inet_aton(ip_address, ip_bytes); 
             memset(&svc_address, 0, sizeof(svc_address));
             svc_address.sin_family = AF_INET;
-            svc_address.sin_addr.s_addr = (*inp).s_addr; 
+            svc_address.sin_addr.s_addr = (*ip_bytes).s_addr; 
             svc_address.sin_port = htons(port_number_as_int); 
-            svc_list->listener = evconnlistener_new_bind(event_loop, client_connect_cb, svc_list, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &svc_address, sizeof(svc_address)); 
-            if (!svc_list->listener)
+            svc_list[current_svc].listener = evconnlistener_new_bind(event_loop, client_connect_cb, svc_list[current_svc], LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &svc_address, sizeof(svc_address)); 
+            if (!current_svc->listener)
                 printf("Couldn't create Listener\n");
         }
-        svc_list = svc_list->next;
+        current_svc++;
     }
 }
 
@@ -260,49 +182,15 @@ set_criteria_addrinfo()
     return hints;
 }
 
-/* 
- * Recives a pointer to the linked list of services. For each node in the list
- * frees the monitor buffer, frees the client list, and then frees the node.  
- */
-void 
-free_all_service_nodes(service *svc_list)
-{
-    service         *temp = svc_list;
-
-    while (svc_list != NULL) {
-        bufferevent_free(svc_list->monitor_buffer_event);
-        free_pair_list(svc_list->client_list);
-        evconnlistener_free(svc_list->listener);
-        svc_list = svc_list->next;
-        free(temp);
-        temp = svc_list;
-    }
-}
-
-/*
- * Recives a pointer to a linked list of service client pairs. Frees both 
- * buffer events and then frees the node, for each node in the linked list. 
- */
-void 
-free_pair_list(svc_client_pair *pair)
-{
-    svc_client_pair   *temp = pair;
-
-    while (pair != NULL){
-        bufferevent_free(pair->client_buffer_event);
-        bufferevent_free(pair->service_buffer_event);
-        pair = pair->next;
-        free(temp);
-        temp = pair;
-    }
-}
-
 int 
 main(int argc, char **argv) 
 {
-    service             *service_list = NULL;
+    int                 list_size = number_services;
+    service             service_list[list_size];
     struct event_base   *event_loop = NULL;
     struct event        *signal_event = NULL;
+
+    list_size = number_services;
 
     /* 
      * Currently -C flag is required but has no effect, if  others are
@@ -313,7 +201,8 @@ main(int argc, char **argv)
     if (!validate_args(argc, argv))
         usage();
 
-    service_list = parse_config_file(argv[argc - 1]);    
+    initalize_array(service_list, list_size);
+    parse_config_file(argv[argc - 1], service_list);    
  
     event_loop = event_base_new();
 

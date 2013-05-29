@@ -11,9 +11,10 @@
  * all clients connected and free memory. 
  */
 void 
-monitor_read_cb(struct bufferevent *bev, void *svc_list)
+monitor_read_cb(struct bufferevent *bev, void passed_svc_list[])
 {
-    service     *current_svc = (service *) svc_list;
+    service     *svc_list = (service *)passed_svc_list;
+    int         current_svc = 0;
     struct      evbuffer *input = bufferevent_get_input(bev);
     int         len, i, j, k;
     bool        now_addr = false;
@@ -24,15 +25,15 @@ monitor_read_cb(struct bufferevent *bev, void *svc_list)
     bzero(text, len); 
     evbuffer_remove(input, text, len); 
 
-    while(current_svc != NULL && current_svc->monitor_buffer_event != bev)
-        current_svc = current_svc->next;
+    while(current_svc < list_len && svc_list[current_svc].monitor_buffer_event != bev)
+        current_svc++;
 
     if (strcmp(text, "service not found") == 0) {
-        fprintf(stderr, "Service %s not found!!\n", current_svc->name);
+        fprintf(stderr, "Service %s not found!!\n", svc_list[current_svc].name);
         return; 
     }
 
-    // parse out name of service, verify correct one, and store the rest in current_svc->svc
+    // parse out name of service, verify correct one, and store the rest in svc_list[current_svc].svc
     j = 0; k = 0;
 
     for (i = 0; (isalpha(text[i]) != 0) && (isdigit(text[i]) != 0); i++);   // drop leading whitespace
@@ -54,19 +55,11 @@ monitor_read_cb(struct bufferevent *bev, void *svc_list)
             temp_name[k++] = text[i];
     }
 
-    if (strcmp(current_svc->name, temp_name) == 0){
+    if (current_svc < list_size && strcmp(svc_list[current_svc].name, temp_name) == 0){
 
-        if (strcmp(temp_address, current_svc->svc) != 0){
-            strcpy(current_svc->svc, temp_address);
-            svc_client_pair *temp = current_svc->client_list;
-
-            while(current_svc->client_list != NULL){
-                current_svc->client_list = temp->next;
-                bufferevent_free(temp->client_buffer_event);
-                bufferevent_free(temp->service_buffer_event);
-                free(temp);
-                temp = current_svc->client_list;
-            }
+        if (strcmp(temp_address, svc_list[current_svc].svc) != 0){
+            strcpy(svc_list[current_svc].svc, temp_address);
+            free_pair_list(svc_list[current_svc].client_list);
         }
     }
     else
@@ -78,20 +71,20 @@ monitor_read_cb(struct bufferevent *bev, void *svc_list)
  * for and connects them to the appropiate service. 
  */
 void 
-client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, 
-                   struct sockaddr *address, int socklen, void *ctx)
+client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *ctx)
 { 
-    service             *current_service;
+    service             *svc_list;
+    int                 current_svc = 0;
     service_pack        *current_svc_pack = NULL; 
     struct event_base   *base = evconnlistener_get_base(listener);
     struct addrinfo     *hints = NULL;
     struct addrinfo     *svc_address = NULL;
     char                ip_address[16] = {'\0'}, port_number[6] = {'\0'};
 
-    current_service = (service *) ctx;
+    svc_list = (service *) ctx;
 
-    while (current_service != NULL) { 
-        if(current_service->listener == listener) {
+    while (current_svc < list_len && strcmp(svc_list[current_svc].name, "none") != 0) { 
+        if(svc_list[current_service].listener == listener) {
             // create a new Service Client Pair and add it to the Client List
             svc_client_pair *proxy_pair = new_null_svc_client_pair();
 

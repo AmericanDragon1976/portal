@@ -2,6 +2,15 @@
 #include "proxy_config.h"
 #include "proxy_events.h"
 
+
+/*
+ * When written this function will increase the siace of the array used to hold services dinamically. 
+ */
+ void increase_svc_list_size()
+{
+    // STUB, EXPAND TO MAKE PROXY CAPABLE OF HANDLING VARIABLE AMOUNTS OF SERVICES.
+}
+
 /* 
  * Recives the name and path to athe config file. Returns an int congtining the
  * length of the config file. There is a good probility that 
@@ -62,11 +71,10 @@ read_file(char *name, int len)
  * Recives a char pointer to the buffer containing the config file text. 
  * Returns a pointer to the head of a linked list of services. 
  */
-service* 
-parse_config_file(char *name)
+void
+parse_config_file(char *name, service svc_list[], int list_len)
 {
-    service     *list_head = new_null_service_node();
-    service     *current_record = list_head;
+    int         *current_svc = 0;
     char        service_start_identifier[] = "service";
     int 		len = get_config_file_len(name);
     char 		*buffer = read_file(name, len);
@@ -76,7 +84,7 @@ parse_config_file(char *name)
 
     while (i < len){
         for (j = 0; j < sizeof(service_start_identifier) - 1; j++)  // read Identifier "service"
-            service_start_identifier[j] =  buffer[i++];
+            service_start_identifier[j] = buffer[i++];
 
         i++;                                                         // advance past white space
 
@@ -88,9 +96,9 @@ parse_config_file(char *name)
         j = 0;
 
         while (buffer[i] != '\n') 
-            current_record->name[j++] = buffer[i++];   // read service name
+            svc_list[current_svc].name[j++] = buffer[i++];   // read service name
 
-        current_record->name[j] = '\0';
+        svc_list[current_svc].name[j] = '\0';
         i++;                                        // disgard \n
 
         for (; buffer[i++] != 'n';);                  // find end of identifier "listen"
@@ -99,9 +107,9 @@ parse_config_file(char *name)
         j = 0;
 
         while (buffer[i] != '\n')
-            current_record->listen[j++] = buffer[i++]; // read listen address
+            svc_list[current_svc].listen[j++] = buffer[i++]; // read listen address
 
-        current_record->listen[j] = '\0';
+        svc_list[current_svc].listen[j] = '\0';
 
         for (;buffer[i++] != 'r';)                    // find end of identifier "monitor"
             ;                   
@@ -109,14 +117,16 @@ parse_config_file(char *name)
         j = 0;
 
         while (i < len && buffer[i] != '\n')
-            current_record->monitor[j++] = buffer[i++];// read monitor address
+            svc_list[current_svc].monitor[j++] = buffer[i++];// read monitor address
 
-        current_record->monitor[j] = '\0';
+        svc_list[current_svc].monitor[j] = '\0';
 
         if (i < len){
-            current_record->next = new_null_service_node();
+            current_svc++;
 
-            current_record = current_record->next;
+        if (current_svc > list_len)
+            increase_svc_list_size();                   // THIS FUNCTION IS ONLY A STUB AT THIS TIME.
+
             for (; buffer[i++] != 's';)              // advance to next record
                 ;
 
@@ -124,7 +134,6 @@ parse_config_file(char *name)
         }
     }
     free(buffer);
-    return list_head;
 }
 
 /* 
