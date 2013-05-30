@@ -8,7 +8,7 @@
  * to NULL, returns a pointer to this new node.
  */
 service* 
-new_null_service() 
+new_null_svc() 
 {
     service     *new_svc = (service *) calloc(1, sizeof(service));
 
@@ -26,7 +26,7 @@ new_null_service()
  * node. 
  */
 service* 
-new_service(struct evconnlistener *listener, struct bufferevent *moniter_buffer_event, svc_client_node *node) 
+new_svc(struct evconnlistener *listener, struct bufferevent *moniter_buffer_event, svc_client_node *node) 
 {
     service     *new_node = (service *) calloc(1, sizeof(service));
 
@@ -73,7 +73,7 @@ new_svc_client_pair(struct bufferevent *client, struct bufferevent *service)
  * service_package 
  */
 service_pack* 
-new_null_service_package() 
+new_null_svc_package() 
 {
     service_pack    *new_svc_pack = (service_pack *) malloc(sizeof(service_pack));
 
@@ -88,7 +88,7 @@ new_null_service_package()
  * returns a pointer to the new service_package 
  */
 service_pack* 
-new_service_package(service *svc, svc_client_pair *pair) 
+new_svc_package(service *svc, svc_client_pair *pair) 
 {
     service_pack    *new_svc_pack = (service_pack *) malloc(sizeof(service_pack));
 

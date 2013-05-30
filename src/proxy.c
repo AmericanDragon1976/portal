@@ -40,18 +40,18 @@ usage()
 }
 
 void
-initalize_array(service_list, list_size)
+initalize_array(service service_list[])
 {
     int i = 0;
 
     for (i = 0; i < list_size; i++){
-        service_list[i].name = "none";
-        service_list[i].listen = "0.0.0.0:0000";
-        service_list[i].monitor = "0.0.0.0:0000";
-        service_list[i].svc = "0.0.0.0:0000";
+        strcpy(service_list[i].name, "none");
+        strcpy(service_list[i].listen, "0.0.0.0:0000");
+        strcpy(service_list[i].monitor, "0.0.0.0:0000");
+        strcpy(service_list[i].svc, "0.0.0.0:0000");
         service_list[i].listener = NULL;
         service_list[i].monitor_buffer_event = NULL;
-        service_list[i].client_list = NULL;
+        service_list[i].list_of_clients.head = NULL;
     }
 }
 
@@ -79,7 +79,7 @@ validate_args(int argc, char **argv)
  *   requests service addr.
  */
 void 
-init_services(struct event_base *event_loop, service service_list[]) 
+init_services(struct event_base *event_loop, service svc_list[]) 
 {
     int                 current_svc = 0;
     struct addrinfo     *server = NULL;
@@ -103,7 +103,7 @@ init_services(struct event_base *event_loop, service service_list[])
             } 
 
             svc_list[current_svc].monitor_buffer_event = bufferevent_socket_new(event_loop, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST); 
-            bufferevent_setcb(svc_list[current_svc].monitor_buffer_event, monitor_read_cb, NULL, event_cb, service_list); 
+            bufferevent_setcb(svc_list[current_svc].monitor_buffer_event, monitor_read_cb, NULL, event_cb, svc_list); 
 
             if(bufferevent_socket_connect(svc_list[current_svc].monitor_buffer_event, server->ai_addr, server->ai_addrlen) != 0) { 
                 fprintf(stderr, "Error connecting to monitor\n"); 
@@ -141,8 +141,8 @@ init_service_listeners(struct event_base *event_loop, service svc_list[])
             svc_address.sin_family = AF_INET;
             svc_address.sin_addr.s_addr = (*ip_bytes).s_addr; 
             svc_address.sin_port = htons(port_number_as_int); 
-            svc_list[current_svc].listener = evconnlistener_new_bind(event_loop, client_connect_cb, svc_list[current_svc], LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &svc_address, sizeof(svc_address)); 
-            if (!current_svc->listener)
+            svc_list[current_svc].listener = evconnlistener_new_bind(event_loop, client_connect_cb, &svc_list[current_svc], LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &svc_address, sizeof(svc_address)); 
+            if (!svc_list[current_svc].listener)
                 printf("Couldn't create Listener\n");
         }
         current_svc++;
@@ -201,7 +201,7 @@ main(int argc, char **argv)
     if (!validate_args(argc, argv))
         usage();
 
-    initalize_array(service_list, list_size);
+    initalize_array(service_list);
     parse_config_file(argv[argc - 1], service_list);    
  
     event_loop = event_base_new();
@@ -219,6 +219,5 @@ main(int argc, char **argv)
 */
     init_signals(event_loop);
     event_base_dispatch(event_loop);
-    free_all_service_nodes(service_list);
     event_base_free(event_loop);
 }

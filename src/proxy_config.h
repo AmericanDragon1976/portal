@@ -11,6 +11,6 @@
 
 int get_config_file_len(char *name);
 char* read_file(char *name, int len);
-void parse_config_file (char *name, service svc_list[], int list_length);
+void parse_config_file (char *name, service svc_list[]);
 bool parse_address(char *address_to_parse, char *ip_address, char* port_number);
 #endif

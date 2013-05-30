@@ -1,7 +1,7 @@
 #include "proxy.h"
 #include "proxy_config.h"
 #include "proxy_events.h"
-
+#include "proxy_structures.h"
 
 /*
  * When written this function will increase the siace of the array used to hold services dinamically. 
@@ -46,7 +46,7 @@ read_file(char *name, int len)
 {
     char    *buffer = (char *) malloc(sizeof(char) * (len));
     FILE    *file_pointer = NULL;
-    size_t  result = NULL;
+    size_t  result;
 
     file_pointer = fopen(name, "r");
     if (file_pointer == NULL) {
@@ -72,9 +72,9 @@ read_file(char *name, int len)
  * Returns a pointer to the head of a linked list of services. 
  */
 void
-parse_config_file(char *name, service svc_list[], int list_len)
+parse_config_file(char *name, service svc_list[])
 {
-    int         *current_svc = 0;
+    int         current_svc = 0;
     char        service_start_identifier[] = "service";
     int 		len = get_config_file_len(name);
     char 		*buffer = read_file(name, len);
@@ -124,7 +124,7 @@ parse_config_file(char *name, service svc_list[], int list_len)
         if (i < len){
             current_svc++;
 
-        if (current_svc > list_len)
+        if (current_svc > list_size)
             increase_svc_list_size();                   // THIS FUNCTION IS ONLY A STUB AT THIS TIME.
 
             for (; buffer[i++] != 's';)              // advance to next record
