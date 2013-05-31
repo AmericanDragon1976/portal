@@ -1,7 +1,7 @@
+#include "proxy_structures.h"
 #include "proxy.h"
 #include "proxy_config.h"
 #include "proxy_events.h"
-#include "proxy_structures.h"
 
 /* 
  * Allocates memory for a new service node and inicilizes all pointer members 
@@ -28,14 +28,14 @@ new_null_svc()
 service* 
 new_svc(struct evconnlistener *listener, struct bufferevent *moniter_buffer_event, svc_client_node *node) 
 {
-    service     *new_node = (service *) calloc(1, sizeof(service));
+    service     *new_svc_node = (service *) calloc(1, sizeof(service));
 
-    new_node->listener = listener;
-    new_node->monitor_buffer_event = moniter_buffer_event;
-    new_node->list_of_clients = (client_list *) malloc(sizeof(client_list));
-    new_svc->list_of_clients->head = node;
+    new_svc_node->listener = listener;
+    new_svc_node->monitor_buffer_event = moniter_buffer_event;
+    new_svc_node->list_of_clients = (client_list *) malloc(sizeof(client_list));
+    new_svc_node->list_of_clients->head = node;
 
-    return new_node;
+    return new_svc_node;
 }
 
 /*  
@@ -47,7 +47,7 @@ new_null_svc_client_pair ()
     svc_client_pair   *new_pair = (svc_client_pair *) malloc(sizeof(svc_client_pair));
 
     new_pair->client_buffer_event = NULL;
-    new_pair->service_buffer_event = NULL;
+    new_pair->svc_buffer_event = NULL;
 
     return (new_pair);
 }
@@ -62,7 +62,7 @@ new_svc_client_pair(struct bufferevent *client, struct bufferevent *service)
     svc_client_pair   *new_pair = (svc_client_pair *) malloc(sizeof(svc_client_pair));
 
     new_pair->client_buffer_event = client;
-    new_pair->service_buffer_event = service;
+    new_pair->svc_buffer_event = service;
 
     return (new_pair);
 }
@@ -72,10 +72,10 @@ new_svc_client_pair(struct bufferevent *client, struct bufferevent *service)
  * Allocates memory for a new service_package sets all pointers to NULL and returns a pointer to the new
  * service_package 
  */
-service_pack* 
+svc_pack* 
 new_null_svc_package() 
 {
-    service_pack    *new_svc_pack = (service_pack *) malloc(sizeof(service_pack));
+    svc_pack    *new_svc_pack = (svc_pack *) malloc(sizeof(svc_pack));
 
     new_svc_pack->svc = NULL;
     new_svc_pack->pair = NULL;
@@ -87,10 +87,10 @@ new_null_svc_package()
  * allocates memory for a new service_package sets all pointers to the values passed in by parameters and
  * returns a pointer to the new service_package 
  */
-service_pack* 
+svc_pack* 
 new_svc_package(service *svc, svc_client_pair *pair) 
 {
-    service_pack    *new_svc_pack = (service_pack *) malloc(sizeof(service_pack));
+    svc_pack    *new_svc_pack = (svc_pack *) malloc(sizeof(svc_pack));
 
     new_svc_pack->svc = svc;
     new_svc_pack->pair = pair;
@@ -98,6 +98,9 @@ new_svc_package(service *svc, svc_client_pair *pair)
     return (new_svc_pack);
 }
 
+/*
+ * Allocates memory for a new svc client node, initializes all the pointers to NULL and returns a pointer to that node. 
+ */
 svc_client_node* 
 new_null_svc_client_node()
 {
@@ -109,6 +112,9 @@ new_null_svc_client_node()
 	return (new_svc_client_node);
 }
 
+/*
+ * Allocates memory for a new svc client node, initializes all the pointers to the values passed in as parameters and returns a pointer to that node. 
+ */
 svc_client_node* 
 new_svc_client_node(svc_client_pair *pair, svc_client_node *next)
 {
@@ -125,13 +131,15 @@ new_svc_client_node(svc_client_pair *pair, svc_client_node *next)
  * buffer events and then frees the node, for each node in the linked list. 
  */
 void 
-free_pair_list(client_list list)
+free_pair_list(client_list *list)
 {
     svc_client_node   *temp = list->head;
 
+    list = NULL;
+
     while (list->head != NULL){
-        bufferevent_free(temp->client_buffer_event);
-        bufferevent_free(temp->service_buffer_event);
+        bufferevent_free(temp->pair->client_buffer_event);
+        bufferevent_free(temp->pair->svc_buffer_event);
         list->head = list->head->next;
         free(temp);
         temp = list->head;

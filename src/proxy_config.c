@@ -1,7 +1,7 @@
+#include "proxy_structures.h"
 #include "proxy.h"
 #include "proxy_config.h"
 #include "proxy_events.h"
-#include "proxy_structures.h"
 
 /*
  * When written this function will increase the siace of the array used to hold services dinamically. 

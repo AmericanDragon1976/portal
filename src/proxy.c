@@ -4,10 +4,10 @@
  * change from Monitor and passes traffic back and forth from clients to services.
  */
 
+#include "proxy_structures.h"
 #include "proxy.h"
 #include "proxy_config.h"
 #include "proxy_events.h"
-#include "proxy_structures.h"
 
 int list_size;
 
@@ -51,7 +51,7 @@ initalize_array(service service_list[])
         strcpy(service_list[i].svc, "0.0.0.0:0000");
         service_list[i].listener = NULL;
         service_list[i].monitor_buffer_event = NULL;
-        service_list[i].list_of_clients.head = NULL;
+        service_list[i].list_of_clients->head = NULL;
     }
 }
 

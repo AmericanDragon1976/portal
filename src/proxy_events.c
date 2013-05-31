@@ -1,7 +1,7 @@
+#include "proxy_structures.h"
 #include "proxy.h"
 #include "proxy_config.h"
 #include "proxy_events.h"
-#include "proxy_structures.h"
 
 /* 
  * Call back for information comming in from the monitor, in the buffer info. Function 
@@ -88,6 +88,7 @@ client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct so
         if(svc_list[current_svc].listener == listener) {
             // create a new Service Client Pair and add it to the Client List
             svc_client_node *proxy_pair_node = new_null_svc_client_node();
+            proxy_pair_node->pair = new_null_svc_client_pair();
 
             // create event buffers to proxy client
             proxy_pair_node->pair->client_buffer_event =  bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
@@ -100,7 +101,7 @@ client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct so
             if (!parse_address(svc_list[current_svc].svc, ip_address, port_number))
                 fprintf(stderr, "Bad address unable to connect client to %s\n", svc_list[current_svc].name);
             else {
-                hints = set_criteria_addrinfo (); 
+                hints = set_criteria_addrinfo(); 
                 i = getaddrinfo(ip_address, port_number, hints, &svc_address);
 
                 if (i != 0) {
@@ -124,8 +125,8 @@ client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct so
                 bufferevent_enable(proxy_pair_node->pair->svc_buffer_event, EV_READ|EV_WRITE);
     
                 // add pair of buffer events to client_list for this service
-                proxy_pair_node->next = svc_list[current_svc].list_of_clients.head;
-                svc_list[current_svc].list_of_clients.head = proxy_pair_node;
+                proxy_pair_node->next = svc_list[current_svc].list_of_clients->head;
+                svc_list[current_svc].list_of_clients->head = proxy_pair_node;
             } 
         }
 
@@ -141,6 +142,8 @@ client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct so
 void 
 proxy_read_cb(struct bufferevent *buffer_event, void *svc_pck) 
 { 
+    svc_client_node     *current_node = NULL;
+    service             *current_svc = ((svc_pack *) svc_pck)->svc;
     svc_pack            *current_svc_pack = (svc_pack *) svc_pck;
     svc_client_pair     *current_pair = current_svc_pack->pair;
     struct bufferevent  *partner = NULL;
@@ -148,42 +151,40 @@ proxy_read_cb(struct bufferevent *buffer_event, void *svc_pck)
 
     source = bufferevent_get_input(buffer_event); 
 
-    if(buffer_event == current_pair->svc_buffer_event)
+    if (buffer_event == current_pair->svc_buffer_event)
         partner = current_pair->client_buffer_event;
-    else 
+    if (buffer_event == current_pair->client_buffer_event)
         partner = current_pair->svc_buffer_event;
 
-    if(!partner){ /*   TODO: REWRITE THIS SECTIOIN HAS CHANGED SO MUCH THAT IT IS NO LONGER VALID
-// no partner free the bufferevents free associated memory and remove pair from list_of_clients and return 
-        svc_client_node *temp = current_svc_pack->svc->list_of_clients.head;
+    if(!partner){    
+// no partner, free the bufferevents free associated memory and remove pair from list_of_clients and return 
 
-        if (temp != NULL && temp->pair == current_svc_pack->pair) {        // the trigger buffer is part of the first client service pair in the list
-            current_svc_pack->svc->list_of_clients.head = temp->next;
-            bufferevent_free(temp->pair->client_buffer_event);
-            bufferevent_free(temp->pair->svc_buffer_event);
-            free(temp->pair);
-            free(temp);
-            return;
+        current_node = current_svc->list_of_clients->head;
+        svc_client_node     *temp_node_ptr = current_node->next;
+
+        if (current_node->pair == current_svc_pack->pair){
+            current_svc->list_of_clients->head = current_node->next;
+            bufferevent_free(current_node->pair->svc_buffer_event);
+            bufferevent_free(current_node->pair->client_buffer_event);
+            free(current_node->pair);
+            free(current_node);
         }
-        while (temp != NULL) {
-
-            if (temp->next->pair == current_svc_pack->pair) {
-                current_pair = temp->pair;
-                temp = temp->next;
-                current_pair->next = temp->next;
-                bufferevent_free(temp->pair->client_buffer_event);
-                bufferevent_free(temp->pair->svc_buffer_event);
-                free(temp->pair);
-                free(temp);
-                return;
+        else {
+            while (current_svc_pack->pair != temp_node_ptr->pair) {
+                current_node = temp_node_ptr;
+                temp_node_ptr = current_node->next;
             }
-            temp = temp->next;
-        } */
-        return;
+            current_node->next = temp_node_ptr->next;
+            bufferevent_free(temp_node_ptr->pair->svc_buffer_event);
+            bufferevent_free(temp_node_ptr->pair->client_buffer_event);
+            free(temp_node_ptr->pair);
+            free(temp_node_ptr);
+        }
+     }
+    else {
+        destination = bufferevent_get_output(partner); 
+        evbuffer_add_buffer(destination, source);
     }
-    destination = bufferevent_get_output(partner); 
-    evbuffer_add_buffer(destination, source);  
-    return;
 }
 
 
