@@ -83,18 +83,18 @@ read_file(char *name, int len)
  * Recives a service pointer to the buffer containing config file
  * Returns a service list, each service has a name and a list of 
  * commands it can use to test the service. 
- */
-svc_list* 
-parse_config_file(char *name) 
+ */ 
+void 
+parse_config_file(char *name, service svc_list[])
 {
-    svc_list    *head = NULL; 
-    svc_list    *current_node = NULL;
+    int         current_svc = 0;
+    char        service_start_identifier[] = "service";
+    int         len = get_config_file_len(name);
+    char        *buffer = read_file(name, len);
     char        text[file_name_len] = {};
     char        hook_name[hook_len];
     char        hook_path[file_name_len];
     int         i, j;
-    int         len = get_config_file_len(name);
-    char        *buffer = read_file(name, len);
 
     if(buffer == NULL || len < 1){
         fprintf(stderr, "Errer reading config file!!\n");
@@ -119,7 +119,7 @@ parse_config_file(char *name)
     }
 
     while (i < len) {
-        current_node = new_null_svc_list();
+
         j = 0;
        bzero(&text, file_name_len);
 
@@ -127,7 +127,7 @@ parse_config_file(char *name)
             text[j++] = buffer[i - 1];
 
         text[j] = '\0';
-        strcpy(current_node->name, text);
+        strcpy(svc_list[current_svc].name, text);
         bzero(&text, file_name_len);
         j = 0; 
 
@@ -140,9 +140,9 @@ parse_config_file(char *name)
             text[j] = '\0';
 
         while (strcmp(text, "service") != 0){
-            hook_path_pair *temp_hook_list = new_null_hook_path_pair();
+            hook_path_pair *temp_hook_list_pair = new_null_hook_path_pair();
 
-            strcpy(temp_hook_list->hook, text); 
+            strcpy(temp_hook_list_pair->hook, text); 
             j = 0;
            bzero(&text, file_name_len);
 
@@ -151,12 +151,15 @@ parse_config_file(char *name)
             } 
 
             text[j] = '\0';
-            strcpy(temp_hook_list->path, text); 
+            strcpy(temp_hook_list_pair->path, text); 
             j = 0;
             bzero(&text, file_name_len);
 
-            temp_hook_list->next = current_node->hook_list;
-            current_node->hook_list = temp_hook_list;
+            hook_path_node      *temp_node = (hook_path_node *) malloc(sizeof(hook_path_node));
+
+            temp_node->pair = temp_hook_list_pair;
+            temp_node->next = svc_list[current_svc].list_of_hooks->head;
+            svc_list[current_svc].list_of_hooks->head = temp_node;
 
             if (i < len){
                 for (; buffer[i] == ' '; i++)
@@ -170,8 +173,7 @@ parse_config_file(char *name)
                 break;
             }
         }
-        current_node->next = head;
-        head = current_node;
+        current_svc++;
     }
     free(buffer);
     return (head);

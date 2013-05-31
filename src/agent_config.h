@@ -3,6 +3,6 @@
 
 int get_config_file_len(char *name);
 char* read_file(char *name, int len);
-svc_list* parse_config_file(char *name);
+void parse_config_file(char *name, service svc_list[]);
 
 #endif

@@ -3,6 +3,8 @@
 #include "agent_config.h"
 #include "agent_events.h"
 
+int list_size;
+
 /*
  * Outputs to the user how to start the program. 
  */
@@ -16,6 +18,16 @@ usage()
     exit(0);
 }
 
+void
+initalize_array(service service_list[])
+{
+    int i = 0;
+
+    for (i = 0; i < list_size; i++){
+        strcpy(service_list[i].name, "none");
+        service_list[i].list_of_hooks = (hook_list *) malloc(sizeof(hook_list));
+    }
+}
 /* 
  * Verifys the command line areguament for the monitor, returns ture if correct 
  * argumets are supplied and false otherwise. 
@@ -123,17 +135,20 @@ void init_signals(struct event_base *event_loop)
 int
 main (int argc, char **argv) 
 {
-    list_heads              services_and_buffer_events;
+    list_size = number_services;
+    service                 service_list[list_size];
     struct event_base       *event_loop = NULL;
     struct evconnlistener   *listener = NULL;
+    buffer_list             buffer_events_list;
 
-    services_and_buffer_events.list_of_services = NULL;
-    services_and_buffer_events.list_of_buffer_events = NULL;
+    buffer_events_list.list_of_buffer_events = NULL;
 
     if (!validate_args(argc, argv)) 
     	usage();
 
-    services_and_buffer_events.list_of_services = parse_config_file(argv[argc - 1]); 
+    initalize_array(service_list);
+
+    parse_config_file(argv[argc - 1]);
     
     event_loop = event_base_new();                                
     listen_for_monitors(event_loop, listener, &services_and_buffer_events);

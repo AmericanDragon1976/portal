@@ -23,6 +23,7 @@
 extern int list_size;
 
 void usage ();
+void initalize_array(service service_list[]);
 bool validate_args(int argc, char **argv);
 void init_services (struct event_base *event_loop, service *svc_list);
 void init_service_listeners(struct event_base *event_loop, service *svc_list);

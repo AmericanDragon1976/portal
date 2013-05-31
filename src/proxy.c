@@ -185,12 +185,10 @@ set_criteria_addrinfo()
 int 
 main(int argc, char **argv) 
 {
-    int                 list_size = number_services;
+    list_size = number_services;
     service             service_list[list_size];
     struct event_base   *event_loop = NULL;
     struct event        *signal_event = NULL;
-
-    list_size = number_services;
 
     /* 
      * Currently -C flag is required but has no effect, if  others are

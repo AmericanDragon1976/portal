@@ -21,6 +21,8 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
+extern int list_size;
+
 void usage(); 
 bool validate_args(int argc, char **argv);
 bool parse_address(char *address_to_parse, char *ip_address, char* port_number);

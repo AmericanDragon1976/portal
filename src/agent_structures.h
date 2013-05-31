@@ -9,6 +9,7 @@
 #define monitor_address          "127.0.0.1:4000"
 #define reply_len                500     // largest size for a reply from an executed file. 
 #define no_such_command          404     // the int returned when attempting to execute a hook/command and there is no match to be used.
+#define number_services          100     // number of services that can be handled at the same time with out reallocating for a larger array. 
 
 /*
  * Structure to hold a hook and the associated exetutable file path including file name. 
