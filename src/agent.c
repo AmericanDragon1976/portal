@@ -1,3 +1,4 @@
+#include "agent_structures.h"
 #include "agent.h" 
 #include "agent_config.h"
 #include "agent_events.h"
@@ -29,64 +30,6 @@ validate_args(int argc, char **argv)
         return (false);
 
     return (true);
-}
-
-/*
- * Allocates memory for a new svc_list, sets all pointer members to NULL, and
- * returns a pointer to it. 
- */
-svc_list*
-new_null_svc_list()
-{
-    svc_list        *new_svc_list = (svc_list *) malloc(sizeof(svc_list));
-
-    new_svc_list->next = NULL;
-    new_svc_list->hook_list = NULL;
-
-    return (new_svc_list);
-}
-
-/*
- * Allocates memory for a new svc_list, sets all pointer members to the value 
- * passed in and returns a pointer to it. 
- */
-svc_list*
-new_svc_list(svc_list *next, hook_path_pair *hook_list_head)
-{
-    svc_list        *new_svc_list = (svc_list *) malloc(sizeof(svc_list));
-
-    new_svc_list->next = next;
-    new_svc_list->hook_list = hook_list_head;
-
-    return (new_svc_list);
-}
-
-/*
- * Allocates memory for a new hook_path_pair, sets all pointer members to NULL
- * and returns a pointer to it.
- */
-hook_path_pair*
-new_null_hook_path_pair()
-{
-    hook_path_pair     *new_hook_path_pair = (hook_path_pair *) malloc(sizeof(hook_path_pair));
-
-    new_hook_path_pair->next = NULL;
-
-    return (new_hook_path_pair);
-}
-
-/*
- * Allocates memory for a new hook_path_pair, sets all pointer members to the
- * value passed in and returns a pointer to it. 
- */
-hook_path_pair*
-new_hook_path_pair(hook_path_pair *next)
-{
-    hook_path_pair     *new_hook_path_pair = (hook_path_pair *) malloc(sizeof(hook_path_pair));
-
-    new_hook_path_pair->next = next;
-
-    return (new_hook_path_pair);
 }
 
 /* 
@@ -171,68 +114,6 @@ void init_signals(struct event_base *event_loop)
     if (!signal_event || event_add(signal_event, NULL) < 0) {
         fprintf(stderr, "Could not create/add signal event.\n");
         exit(0);
-    }
-}
-
-/*
- * Recives the struct with a pointer to the two lists, the buffer list, and the
- * service list. Calls the functions to realease the memory for each of the lists.
- */
-void
-free_lists_memory(list_heads *heads)
-{
-    free_buffers(heads->list_of_buffer_events); 
-    free_service_nodes(heads->list_of_services); 
-}
-
-/*
- * Recives a pointer to the linked list of service nodes and frees all memory 
- * associated with that list. 
- */
-void 
-free_service_nodes(svc_list *service_list)
-{
-    svc_list    *temp = service_list;
-
-    while (service_list != NULL){ 
-        free_command_list(service_list->hook_list);
-        service_list = service_list->next;
-        free(temp);
-        temp = service_list;
-    }
-}
-
-/*
- * Recives a pointer to a linked list with each node holding a bufferevent. Frees
- * each bufferevent and the node holding it. 
- */
-void 
-free_buffers(buffer_list *buffer_events)
-{
-    buffer_list     *temp = buffer_events;
-
-    while (buffer_events != NULL){
-        bufferevent_free(buffer_events->bev);
-        buffer_events = buffer_events->next;
-        free(temp);
-        temp = buffer_events;
-    }
-}
-
-
-/*
- * Recives a pointer to a linked list of commands and frees all memory associated
- * with that list. 
- */
-void 
-free_command_list(hook_path_pair *commands)
-{
-    hook_path_pair  *temp = commands;
-
-    while (commands != NULL){
-        commands = commands->next;
-        free(temp);
-        temp = commands;
     }
 }
 

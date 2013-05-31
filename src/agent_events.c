@@ -1,3 +1,4 @@
+#include "agent_structures.h"
 #include "agent.h" 
 #include "agent_config.h"
 #include "agent_events.h"

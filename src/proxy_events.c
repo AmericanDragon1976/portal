@@ -160,7 +160,6 @@ proxy_read_cb(struct bufferevent *buffer_event, void *svc_pck)
 // no partner, free the bufferevents free associated memory and remove pair from list_of_clients and return 
 
         current_node = current_svc->list_of_clients->head;
-        svc_client_node     *temp_node_ptr = current_node->next;
 
         if (current_node->pair == current_svc_pack->pair){
             current_svc->list_of_clients->head = current_node->next;
@@ -170,6 +169,8 @@ proxy_read_cb(struct bufferevent *buffer_event, void *svc_pck)
             free(current_node);
         }
         else {
+            svc_client_node     *temp_node_ptr = current_node->next;
+            
             while (current_svc_pack->pair != temp_node_ptr->pair) {
                 current_node = temp_node_ptr;
                 temp_node_ptr = current_node->next;
