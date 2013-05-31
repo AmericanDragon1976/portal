@@ -40,6 +40,7 @@ typedef struct hook_path_node {
 typedef struct service {
     char            	name[svc_name_len];
     hook_list 			*list_of_hooks;
+    buffer_list 		*bevs;
 } service;
 
 /*

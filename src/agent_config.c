@@ -7,15 +7,15 @@
  * Takes a pointer to a linked list of agent services and prints the information contained in 
  * the linked list to stdout.  
  */
-void print_hook_list(svc_list *list)
+void print_hook_list(hook_list *list)
 {
-    while (list != NULL){ 
-        hook_path_pair  *temp = list->hook_list;
-        while (temp != NULL){ 
-            printf("command: %s, Path: %s\n", temp->hook, temp->path);
-            temp = temp->next;
-        }
-        list = list->next;
+    hook_path_node      *current_node = list->head;
+    hook_path_pair      *temp_pair = NULL;
+    
+    while (current_node != NULL){ 
+        temp_pair = current_node->pair;
+        printf("command: %s, Path: %s\n", temp_pair->hook, temp_pair->path);
+        current_node = current_node->next;
     }
 }
 

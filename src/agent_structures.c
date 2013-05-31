@@ -12,7 +12,8 @@ new_null_svc()
 {
     service        *new_svc = (service *) malloc(sizeof(service));
 
-    new_svc_list->list_of_hooks = NULL;
+    new_svc->list_of_hooks = NULL;
+    new_svc->bevs = (buffer_list *) malloc(sizeof(buffer_list));
 
     return (new_svc);
 }
@@ -27,6 +28,7 @@ new_svc(hook_path_pair *hook_list_head)
     service        *new_svc = (service *) malloc(sizeof(service));
 
     new_svc->list_of_hooks = hook_list_head;
+    new_svc->bevs = (buffer_list *) malloc(sizeof(buffer_list));
 
     return (new_svc);
 }

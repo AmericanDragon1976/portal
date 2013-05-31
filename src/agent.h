@@ -26,7 +26,7 @@ extern int list_size;
 void usage(); 
 bool validate_args(int argc, char **argv);
 bool parse_address(char *address_to_parse, char *ip_address, char* port_number);
-void listen_for_monitors(struct event_base *base, struct evconnlistener *listner, list_heads *heads);
+void listen_for_monitors(struct event_base *base, struct evconnlistener *listner, service svc_list[]);
 void init_signals(struct event_base *event_loop);
 
 #endif

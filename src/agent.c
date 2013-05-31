@@ -26,6 +26,7 @@ initalize_array(service service_list[])
     for (i = 0; i < list_size; i++){
         strcpy(service_list[i].name, "none");
         service_list[i].list_of_hooks = (hook_list *) malloc(sizeof(hook_list));
+        service_list[i].bevs =  (buffer_list *) malloc(sizeof(buffer_list)); 
     }
 }
 /* 
@@ -76,7 +77,7 @@ parse_address(char *address_to_parse, char *ip_address, char* port_number)
 
     port_number[j] = '\0';
 
-    return port_now;
+    return (port_now);
 }
 
 /*
@@ -87,7 +88,7 @@ parse_address(char *address_to_parse, char *ip_address, char* port_number)
  * but will be needed by the cb function, adds to the buffer event list. 
  */
 void
-listen_for_monitors(struct event_base *event_loop, struct evconnlistener *local_listener, list_heads *heads)
+listen_for_monitors(struct event_base *event_loop, struct evconnlistener *local_listener, service svc_list[])
 {
     char                ip[ip_len], port[port_len];
     int                 port_number;
@@ -103,7 +104,7 @@ listen_for_monitors(struct event_base *event_loop, struct evconnlistener *local_
         address_of_monitor.sin_family = AF_INET;
         address_of_monitor.sin_addr.s_addr = (*inp).s_addr;
         address_of_monitor.sin_port = htons(port_number);
-        local_listener = evconnlistener_new_bind(event_loop, monitor_connect_cb, heads, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &address_of_monitor, sizeof(address_of_monitor));
+        local_listener = evconnlistener_new_bind(event_loop, monitor_connect_cb, svc_list, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &address_of_monitor, sizeof(address_of_monitor));
 
         if (!local_listener)
             fprintf(stderr, "Couldn't create listner for monitors.\n");
@@ -139,9 +140,6 @@ main (int argc, char **argv)
     service                 service_list[list_size];
     struct event_base       *event_loop = NULL;
     struct evconnlistener   *listener = NULL;
-    buffer_list             buffer_events_list;
-
-    buffer_events_list.list_of_buffer_events = NULL;
 
     if (!validate_args(argc, argv)) 
     	usage();
@@ -151,7 +149,7 @@ main (int argc, char **argv)
     parse_config_file(argv[argc - 1]);
     
     event_loop = event_base_new();                                
-    listen_for_monitors(event_loop, listener, &services_and_buffer_events);
+    listen_for_monitors(event_loop, listener, service_list);
 
     init_signals(event_loop);
     event_base_dispatch(event_loop);
