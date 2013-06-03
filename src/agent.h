@@ -22,6 +22,7 @@
 #include <openssl/rand.h>
 
 extern int list_size;
+extern buffer_list buffer_event_list;
 
 void usage(); 
 bool validate_args(int argc, char **argv);

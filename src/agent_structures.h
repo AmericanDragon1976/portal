@@ -40,7 +40,6 @@ typedef struct hook_path_node {
 typedef struct service {
     char            	name[svc_name_len];
     hook_list 			*list_of_hooks;
-    buffer_list 		*bevs;
 } service;
 
 /*
@@ -55,7 +54,7 @@ typedef struct buffer_list_node {
  * Structure to keep track of the head node of the linked list of bufferevents.
  */
 typedef struct buffer_list {
-    buffer_list *list_of_buffer_events;
+    buffer_list *head;
 } buffer_list;
 
 svc_list* new_null_svc();

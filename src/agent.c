@@ -4,6 +4,7 @@
 #include "agent_events.h"
 
 int list_size;
+buffer_list buffer_event_list;
 
 /*
  * Outputs to the user how to start the program. 
@@ -23,10 +24,9 @@ initalize_array(service service_list[])
 {
     int i = 0;
 
-    for (i = 0; i < list_size; i++){
+    for (i = 0; i < list_size; i++){                                        // list_size is a global variable
         strcpy(service_list[i].name, "none");
         service_list[i].list_of_hooks = (hook_list *) malloc(sizeof(hook_list));
-        service_list[i].bevs =  (buffer_list *) malloc(sizeof(buffer_list)); 
     }
 }
 /* 
@@ -137,7 +137,7 @@ int
 main (int argc, char **argv) 
 {
     list_size = number_services;
-    service                 service_list[list_size];
+    service                 service_list[list_size];                         // list_size is a global variable
     struct event_base       *event_loop = NULL;
     struct evconnlistener   *listener = NULL;
 

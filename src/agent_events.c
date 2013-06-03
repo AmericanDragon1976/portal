@@ -7,18 +7,19 @@
  * Called when a monitor connects. Sets up an event buffer for that monitor and
  * adds it to the event base. 
  */
-void  //TODO: update as per new data structures 
-monitor_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *ctx)
+void  
+monitor_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *svc_list)
 {
     service             *svc_list = (service *) ctx;
     struct event_base   *base = evconnlistener_get_base(listener);
     struct bufferevent  *temp_buffer_event = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
+    buffer_list_node    *temp_node = (buffer_list_node *) malloc(sizeof(buffer_list_node));
 
     bufferevent_setcb(temp_buffer_event, read_cb, NULL, event_cb, svc_list);
     bufferevent_enable(temp_buffer_event, EV_READ|EV_WRITE);
-    temp_buffer_events->bev = temp_buffer_event;
-    temp_buffer_events->next = lists->list_of_buffer_events;
-    lists->list_of_buffer_events = temp_buffer_events;
+    temp_node->bev = temp_buffer_event;
+    temp_node->next = buffer_event_list.head;                     // buffer_event_list is a global variable
+    buffer_event_list.head = temp_node;
 }
 
 /*
@@ -29,14 +30,13 @@ monitor_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct s
  * file associated with that command for that service, and then sends the 
  * results back to monitor. 
  */
-void //TODO: update as per new data structures
+void 
 read_cb(struct bufferevent *buffer_event, void *svc_list)
 {
-    struct      evbuffer *input = bufferevent_get_input(buffer_event);
+    struct      evbuffer input = bufferevent_get_input(buffer_event);
     char        *text, *svc, *command;
-    svc_list    *temp_service;
-    int         len, result;
-    list_heads  *heads_of_lists = (list_heads *) heads;
+    int         len, result, svc_location_index;
+    service     *array_of_svc = (service *) svc_list;
 
     len = evbuffer_get_length(input);
     text = (char *) malloc(len);
@@ -44,9 +44,9 @@ read_cb(struct bufferevent *buffer_event, void *svc_list)
     evbuffer_remove(input, text, len); 
 
     parse_hook_command(text, svc, command, len);
-    temp_service = find_service(svc, heads_of_lists->list_of_services);
-    result = execute_command(temp_service, command);
-    bufferevent_write(buffer_event, &result, reply_len);
+    svc_location_index = find_service_index(svc, svc_list);
+    result = execute_command(array_of_svc[svc_location_index], command);
+    bufferevent_write(buffer_event, &result, sizeof(int));
 }
 
 /*
@@ -103,16 +103,16 @@ find_service(char *svc, service svcs[])
  * or command is. Uses the command to find the file to be executed from the list of 
  * commands for that service, executes it and returns any responce. 
  */
- int //TODO: update as per new data structures
- execute_command(svc_list *service, char *command)
+ int 
+ execute_command(svc_list service, char *command)
  {
-    hook_path_pair      *hook_lst = service->hook_list;
+    hook_path_node      *hook_list = service.list_of_hooks->head;
 
-    while (hook_lst != NULL && strcmp(hook_lst->hook, command) != 0)
-        hook_lst = hook_lst->next;
+    while (hook_list != NULL && strcmp(hook_list->pair->hook, command) != 0)
+        hook_list = hook_list->next;
 
-    if (hook_lst != NULL)
-        return (system(hook_lst->path));
+    if (hook_list != NULL)
+        return (system(hook_list->pair->path));
     else 
         return (no_such_command);
  }
@@ -122,7 +122,7 @@ find_service(char *svc, service svcs[])
  * what the event was, and a pointer to a struct which has pointers to the 
  * linked list of services and the linked list of bufferevents. 
  */
-void //TODO: update as per new data structures
+void 
 event_cb(struct bufferevent *buffer_event, short what, void *ctx)
 { 
     if (what & BEV_EVENT_ERROR) {
