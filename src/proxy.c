@@ -130,23 +130,23 @@ init_service_listeners(struct event_base *event_loop, service svc_list[])
     struct sockaddr_in  svc_address;
     struct in_addr      *ip_bytes = (struct in_addr *) malloc (sizeof(struct in_addr));
 
-    while (current_svc < list_size && strcmp(svc_list[current_svc].name, "none") != 0) {
+    while ((current_svc < list_size) && (strcmp(svc_list[current_svc].name, "none") != 0)) { printf("current_svc %d name %s\n", current_svc, svc_list[current_svc].name);
         char ip_address[ip_len], port_number[port_len];
 
         if (!parse_address(svc_list[current_svc].listen, ip_address, port_number)) {
             fprintf(stderr, "Bad address unable listen for clients for service %s\n", svc_list[current_svc].name);
-        } else {
+        } else {printf("%d \n", current_svc);
             port_number_as_int = atoi(port_number);
             inet_aton(ip_address, ip_bytes); 
             memset(&svc_address, 0, sizeof(svc_address));
             svc_address.sin_family = AF_INET;
             svc_address.sin_addr.s_addr = (*ip_bytes).s_addr; 
             svc_address.sin_port = htons(port_number_as_int); 
-            svc_list[current_svc].listener = evconnlistener_new_bind(event_loop, client_connect_cb, &svc_list[current_svc], LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &svc_address, sizeof(svc_address)); 
+            svc_list[current_svc].listener = evconnlistener_new_bind(event_loop, client_connect_cb, &svc_list[current_svc], LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &svc_address, sizeof(svc_address));
             if (!svc_list[current_svc].listener)
                 printf("Couldn't create Listener\n");
-        }
-        current_svc++;
+        } printf("before ++ %d \n", current_svc);
+        current_svc++;printf("after ++%d \n", current_svc);
     }
 }
 
@@ -182,4 +182,3 @@ set_criteria_addrinfo()
 
     return hints;
 }
-

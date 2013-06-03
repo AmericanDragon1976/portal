@@ -88,7 +88,7 @@ parse_config_file(char *name, service svc_list[])
 
         i++;                                                         // advance past white space
 
-        if (strcmp(service_start_identifier, "service")){           // returns 0 (false) only if they are equal
+        if (strcmp(service_start_identifier, "service") != 0){           // returns 0 only if they are equal
             fprintf(stderr, "Config file Corrupted. \n");
             exit(0);
         }
@@ -155,18 +155,20 @@ parse_address(char *address_to_parse, char *ip_address, char* port_number)
     for (i = 0; i < complete_address_len; ){
         if (address_to_parse[i] == ':') {
             i++;
-            ip_address[j] = '\0';
             port_now = true; 
             j = 0;
         }
 
-        if (port_now == false)
+        if (port_now == false) {
+            if (j >= ip_len)
+                return (port_now);
             ip_address[j++] = address_to_parse[i++];
-        else 
+        }
+        else {
+            if (j >= port_len)
+                return (port_now);
             port_number[j++] = address_to_parse[i++];
+        }
     }
-
-    port_number[j] = '\0';
-
     return port_now;
 }
