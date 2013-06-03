@@ -54,18 +54,18 @@ typedef struct buffer_list_node {
  * Structure to keep track of the head node of the linked list of bufferevents.
  */
 typedef struct buffer_list {
-    buffer_list *head;
+    buffer_list_node *head;
 } buffer_list;
 
-svc_list* new_null_svc();
-svc_list* new_svc(hook_path_pair *hook_list_head);
+service* new_null_svc();
+service* new_svc(hook_path_node *hook_list_head);
 hook_path_node* new_null_hook_path_node();
 hook_path_node* new_hook_path_node(hook_path_pair *pair, hook_path_node *nxt);
 hook_list* new_null_hook_list();
 hook_list* new_hook_list(hook_path_node *head);
 buffer_list_node* new_null_buffer_list();
 buffer_list_node* new_buffer_list(buffer_list_node *nxt, struct bufferevent *bev);
-void free_buffers(buffer_list *bevs);
-void free_hook_list(hook_list *hooks);
+void free_buffers();
+// TODO: Free all other memory from data structures. 
 
 #endif 

@@ -6,7 +6,7 @@ void read_cb(struct bufferevent *buffer_event, void *heads);
 void event_cb(struct bufferevent *buffer_event, short what, void *ctx);
 void signal_cb(evutil_socket_t signal, short events, void *user_data);
 void parse_hook_command(char *text, char *svc, char *command, int len);
-int find_service_index(svc, svc_list);
-int execute_command(svc_list *service, char *command);
+int find_service_index(char *name, service *svc_list);
+int execute_command(service svc, char *command);
 
 #endif

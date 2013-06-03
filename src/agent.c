@@ -146,7 +146,7 @@ main (int argc, char **argv)
 
     initalize_array(service_list);
 
-    parse_config_file(argv[argc - 1]);
+    parse_config_file(argv[argc - 1], service_list);
     
     event_loop = event_base_new();                                
     listen_for_monitors(event_loop, listener, service_list);
@@ -154,6 +154,7 @@ main (int argc, char **argv)
     init_signals(event_loop);
     event_base_dispatch(event_loop);
     evconnlistener_free(listener);
-    free_lists_memory(&services_and_buffer_events);
+    free_buffers();
+    free_hook_list();
     event_base_free(event_loop);
 }

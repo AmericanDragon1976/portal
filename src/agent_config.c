@@ -54,7 +54,7 @@ read_file(char *name, int len)
 {
     char    *buffer = (char *) malloc(sizeof(char) * (len));
     FILE    *file_pointer = NULL;
-    size_t  result = NULL;
+    size_t  result = 0;
 
     file_pointer = fopen(name, "r");
 
@@ -98,7 +98,7 @@ parse_config_file(char *name, service svc_list[])
 
     if(buffer == NULL || len < 1){
         fprintf(stderr, "Errer reading config file!!\n");
-        free(head);
+        free(buffer);
         exit(0);
     }
 
@@ -140,7 +140,7 @@ parse_config_file(char *name, service svc_list[])
             text[j] = '\0';
 
         while (strcmp(text, "service") != 0){
-            hook_path_pair *temp_hook_list_pair = new_null_hook_path_pair();
+            hook_path_pair *temp_hook_list_pair = (hook_path_pair *) malloc (sizeof(hook_path_pair));
 
             strcpy(temp_hook_list_pair->hook, text); 
             j = 0;
@@ -176,5 +176,4 @@ parse_config_file(char *name, service svc_list[])
         current_svc++;
     }
     free(buffer);
-    return (head);
 }

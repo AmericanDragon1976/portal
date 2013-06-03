@@ -34,14 +34,17 @@ monitor_events.o: monitor_events.c monitor.h monitor_config.h monitor_events.h
 
 
 
-agent: agent.o agent_config.o agent_events.o
-	../../libevent-2.0.21-stable/libtool --mode=link gcc -o agent agent.o agent_config.o agent_events.o ../../libevent-2.0.21-stable/libevent.la ../../libevent-2.0.21-stable/libevent_openssl.la -lssl -lcrypto
+agent: agent.o agent_config.o agent_events.o agent_structures.o 
+	../../libevent-2.0.21-stable/libtool --mode=link gcc -o agent agent.o agent_config.o agent_events.o agent_structures.o ../../libevent-2.0.21-stable/libevent.la ../../libevent-2.0.21-stable/libevent_openssl.la -lssl -lcrypto
 
-agent.o: agent.c agent.h agent_config.h agent_events.h
+agent.o: agent.c agent.h agent_config.h agent_events.h agent_structures.h
 	gcc -c agent.c
 
-agent_config.o: agent_config.c agent.h agent_config.h agent_events.h
+agent_config.o: agent_config.c agent.h agent_config.h agent_events.h agent_structures.h
 	gcc -c agent_config.c
 
-agent_events.o: agent_events.c agent.h agent_config.h agent_events.h
+agent_events.o: agent_events.c agent.h agent_config.h agent_events.h agent_structures.h
 	gcc -c agent_events.c 
+
+agent_structures.o: agent_structures.c  agent_structures.h agent.h agent_config.h agent_events.h
+	gcc -c agent_structures.c

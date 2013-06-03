@@ -8,7 +8,7 @@
  * adds it to the event base. 
  */
 void  
-monitor_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *svc_list)
+monitor_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *ctx)
 {
     service             *svc_list = (service *) ctx;
     struct event_base   *base = evconnlistener_get_base(listener);
@@ -33,10 +33,10 @@ monitor_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct s
 void 
 read_cb(struct bufferevent *buffer_event, void *svc_list)
 {
-    struct      evbuffer input = bufferevent_get_input(buffer_event);
-    char        *text, *svc, *command;
-    int         len, result, svc_location_index;
-    service     *array_of_svc = (service *) svc_list;
+    struct evbuffer     *input = bufferevent_get_input(buffer_event);
+    char                *text, *svc, *command;
+    int                 len, result, svc_location_index;
+    service             *array_of_svc = (service *) svc_list;
 
     len = evbuffer_get_length(input);
     text = (char *) malloc(len);
@@ -46,7 +46,10 @@ read_cb(struct bufferevent *buffer_event, void *svc_list)
     parse_hook_command(text, svc, command, len);
     svc_location_index = find_service_index(svc, svc_list);
     result = execute_command(array_of_svc[svc_location_index], command);
-    bufferevent_write(buffer_event, &result, sizeof(int));
+    if (result > -1)
+        bufferevent_write(buffer_event, &result, sizeof(int));
+    else
+        fprintf(stderr, "ERROR: command recived for a service not in the list of services. ");
 }
 
 /*
@@ -82,20 +85,19 @@ parse_hook_command(char *text, char *svc, char* command, int len)
  * and returns a pointer to the named service. If there is no match
  * returns NULL. 
  */
-service*
-find_service(char *svc, service svcs[])
+int 
+find_service_index(char *name, service *svc_list)
 {
-    int             *current_svc = 0;
-    service         *temp_svc_ptr = NULL;
+    int             current_svc = 0;
 
     while (current_svc < list_size) {
-        if (strcmp(svcs[current_svc].name, svc) != 0)
+        if (strcmp(svc_list[current_svc].name, name) != 0)
             current_svc++;
         else
-            return (&svcs[current_svc]);
+            return (current_svc);
     }
 
-    return (NULL);
+    return (-1);
 }
 
 /*
@@ -104,9 +106,9 @@ find_service(char *svc, service svcs[])
  * commands for that service, executes it and returns any responce. 
  */
  int 
- execute_command(svc_list service, char *command)
+ execute_command(service svc, char *command)
  {
-    hook_path_node      *hook_list = service.list_of_hooks->head;
+    hook_path_node      *hook_list = svc.list_of_hooks->head;
 
     while (hook_list != NULL && strcmp(hook_list->pair->hook, command) != 0)
         hook_list = hook_list->next;

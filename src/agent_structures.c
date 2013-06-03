@@ -10,12 +10,11 @@
 service*
 new_null_svc()
 {
-    service        *new_svc = (service *) malloc(sizeof(service));
+    service        *temp_svc = (service *) malloc(sizeof(service));
 
-    new_svc->list_of_hooks = NULL;
-    new_svc->bevs = (buffer_list *) malloc(sizeof(buffer_list));
+    temp_svc->list_of_hooks = NULL;
 
-    return (new_svc);
+    return (temp_svc);
 }
 
 /*
@@ -23,14 +22,13 @@ new_null_svc()
  * passed in and returns a pointer to it. 
  */
 service*
-new_svc(hook_path_pair *hook_list_head)
+new_svc(hook_path_node *hook_list_head)
 {
-    service        *new_svc = (service *) malloc(sizeof(service));
+    service        *temp_svc = (service *) malloc(sizeof(service));
 
-    new_svc->list_of_hooks = hook_list_head;
-    new_svc->bevs = (buffer_list *) malloc(sizeof(buffer_list));
+    temp_svc->list_of_hooks->head = hook_list_head;
 
-    return (new_svc);
+    return (temp_svc);
 }
 
 /*
@@ -120,15 +118,15 @@ new_buffer_list(buffer_list_node *nxt, struct bufferevent *bev)
  * each bufferevent and the node holding it. 
  */
 void 
-free_buffers(buffer_list *list_of_buffers)
+free_buffers()
 {
-    buffer_list_node     *current_node = list_of_buffers->head;
+    buffer_list_node     *current_node = buffer_event_list.head;
 
-    while (list_of_buffers->head != NULL){
+    while (buffer_event_list.head != NULL){
+        buffer_event_list.head = current_node->next;
         bufferevent_free(current_node->bev);
-        list_of_buffers->head = current_node->next;
         free(current_node);
-        current_node = list_of_buffers->head;
+        current_node = buffer_event_list.head;
     }
 }
 
