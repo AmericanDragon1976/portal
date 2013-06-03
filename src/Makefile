@@ -48,3 +48,9 @@ agent_events.o: agent_events.c agent.h agent_config.h agent_events.h agent_struc
 
 agent_structures.o: agent_structures.c  agent_structures.h agent.h agent_config.h agent_events.h
 	gcc -c agent_structures.c
+
+FunctionTest.o: FunctionTest.c agent_structures.h agent.h agent_config.h agent_events.h
+	gcc -c FunctionTest.c
+
+function: proxy.o proxy_config.o proxy_events.o proxy_structures.o FunctionTest.o
+	../../libevent-2.0.21-stable/libtool --mode=link gcc -o function proxy.o proxy_config.o proxy_events.o proxy_structures.o FunctionTest.o ../../libevent-2.0.21-stable/libevent.la ../../libevent-2.0.21-stable/libevent_openssl.la -lssl -lcrypto 

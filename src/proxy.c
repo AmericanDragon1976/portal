@@ -44,13 +44,14 @@ initalize_array(service service_list[])
 {
     int i = 0;
 
-    for (i = 0; i < list_size; i++){
+    for (i = 0; i < list_size; i++){ 
         strcpy(service_list[i].name, "none");
         strcpy(service_list[i].listen, "0.0.0.0:0000");
         strcpy(service_list[i].monitor, "0.0.0.0:0000");
         strcpy(service_list[i].svc, "0.0.0.0:0000");
         service_list[i].listener = NULL;
         service_list[i].monitor_buffer_event = NULL;
+        service_list[i].list_of_clients = (client_list *) malloc(sizeof(client_list));
         service_list[i].list_of_clients->head = NULL;
     }
 }
