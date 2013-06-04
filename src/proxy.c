@@ -12,21 +12,6 @@
 int list_size;
 
 /* 
- * Called by to_ event every time it times out. They body is commented out
- * because its current use is for testing some aspects and it may be removed 
- * from the final product. 
- */
-void 
-timeout_cb(evutil_socket_t fd, short what, void *arg) 
-{ 
-/*  service *test = (service *) arg;
-    bufferevent_write(test->monitor_buffer_event, test->name, sizeof(test->name));
-    printf("timeout_cb called\n");
-    printf("Server up\n");
-*/
-}
-
-/* 
  * Prints to screen the proper syntax for running the program, then exits.
  */
 void 
@@ -130,12 +115,12 @@ init_service_listeners(struct event_base *event_loop, service svc_list[])
     struct sockaddr_in  svc_address;
     struct in_addr      *ip_bytes = (struct in_addr *) malloc (sizeof(struct in_addr));
 
-    while ((current_svc < list_size) && (strcmp(svc_list[current_svc].name, "none") != 0)) { printf("current_svc %d name %s\n", current_svc, svc_list[current_svc].name);
+    while ((current_svc < list_size) && (strcmp(svc_list[current_svc].name, "none") != 0)) { 
         char ip_address[ip_len], port_number[port_len];
 
         if (!parse_address(svc_list[current_svc].listen, ip_address, port_number)) {
             fprintf(stderr, "Bad address unable listen for clients for service %s\n", svc_list[current_svc].name);
-        } else {printf("%d \n", current_svc);
+        } else 
             port_number_as_int = atoi(port_number);
             inet_aton(ip_address, ip_bytes); 
             memset(&svc_address, 0, sizeof(svc_address));
@@ -145,8 +130,8 @@ init_service_listeners(struct event_base *event_loop, service svc_list[])
             svc_list[current_svc].listener = evconnlistener_new_bind(event_loop, client_connect_cb, &svc_list[current_svc], LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &svc_address, sizeof(svc_address));
             if (!svc_list[current_svc].listener)
                 printf("Couldn't create Listener\n");
-        } printf("before ++ %d \n", current_svc);
-        current_svc++;printf("after ++%d \n", current_svc);
+        } 
+        current_svc++;
     }
 }
 
@@ -182,3 +167,36 @@ set_criteria_addrinfo()
 
     return hints;
 }
+
+/*
+ * Reads in config file. connects to monitor and gets current address for service, creats listeners to accept clients, 
+ * proxyies clients to the appropiate service. 
+ */ /*
+int 
+main(int argc, char **argv) 
+{
+    list_size = number_services;
+    service             service_list[list_size];
+    struct event_base   *event_loop = NULL;
+    struct event        *signal_event = NULL;
+
+
+     // -C flag required but has no effect, if  others added change verfyComndlnArgs() function 
+
+
+    if (!validate_args(argc, argv))
+        usage();
+
+    initalize_array(service_list);
+    parse_config_file(argv[argc - 1], service_list);    
+ 
+    event_loop = event_base_new();
+
+    init_services(event_loop, service_list);
+    init_service_listeners(event_loop, service_list); 
+
+    init_signals(event_loop);
+    event_base_dispatch(event_loop);
+    event_base_free(event_loop);
+}
+*/
