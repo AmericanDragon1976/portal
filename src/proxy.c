@@ -120,7 +120,7 @@ init_service_listeners(struct event_base *event_loop, service svc_list[])
 
         if (!parse_address(svc_list[current_svc].listen, ip_address, port_number)) {
             fprintf(stderr, "Bad address unable listen for clients for service %s\n", svc_list[current_svc].name);
-        } else 
+        } else {
             port_number_as_int = atoi(port_number);
             inet_aton(ip_address, ip_bytes); 
             memset(&svc_address, 0, sizeof(svc_address));

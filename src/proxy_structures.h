@@ -68,5 +68,7 @@ svc_client_node* new_svc_client_node(svc_client_pair *pair, svc_client_node *nex
 svc_pack* new_null_svc_package();
 svc_pack* new_svc_package(service *svc, svc_client_pair *pair);
 void free_pair_list(client_list *list);
+void free_svc_client_pair(svc_client_pair *pair);
+void free_svc_client_node(svc_client_node *node);
 
 #endif 

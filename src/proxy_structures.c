@@ -133,16 +133,33 @@ new_svc_client_node(svc_client_pair *pair, svc_client_node *next)
 void 
 free_pair_list(client_list *list)
 {
-    svc_client_node   *temp = list->head;
+    free_svc_client_node(list->head);
+    list->head = NULL;
+}
 
-    list = NULL;
+void 
+free_svc_client_node(svc_client_node *node)
+{
+    svc_client_node   *temp = node;
 
-    while (list->head != NULL){
-        bufferevent_free(temp->pair->client_buffer_event);
-        bufferevent_free(temp->pair->svc_buffer_event);
-        list->head = list->head->next;
+    while (node != NULL){
+
+        free_svc_client_pair(temp->pair);
+        node = node->next;
         free(temp);
-        temp = list->head;
+        temp = node;
     }
 }
 
+void 
+free_svc_client_pair(svc_client_pair *pair)
+{
+    if (pair != NULL){
+        if (pair->client_buffer_event != NULL)
+            bufferevent_free(pair->client_buffer_event);
+
+        if (pair->svc_buffer_event != NULL)
+            bufferevent_free(pair->svc_buffer_event);
+        free(pair);
+    }
+}

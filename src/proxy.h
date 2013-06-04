@@ -20,7 +20,7 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
-extern int list_size;
+extern int list_size, i;
 
 void usage ();
 void initalize_array(service service_list[]);
