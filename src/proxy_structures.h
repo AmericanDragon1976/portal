@@ -2,7 +2,7 @@
 #define PROXY_STRUCTURES_H
 
 #define svc_name_len            30      // length of all char arrays holding service names
-#define complete_address_len    22      // length of char arrays holding address a.d.c.e:portnum
+#define complete_address_len    23      // length of char arrays holding address a.d.c.e:portnum
 #define file_name_len           100     // length of file names
 #define ip_len                  16      // length of ip portion of address
 #define port_len                6       // length of port number portion of address

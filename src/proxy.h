@@ -29,5 +29,6 @@ void init_services (struct event_base *event_loop, service *svc_list);
 void init_service_listeners(struct event_base *event_loop, service *svc_list);
 struct addrinfo* set_criteria_addrinfo();
 void init_signals(struct event_base *event_loop);
+bool check_for_address_collision(char *address, service *svc_list);
 
 #endif

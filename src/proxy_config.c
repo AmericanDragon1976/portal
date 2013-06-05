@@ -76,6 +76,7 @@ parse_config_file(char *name, service svc_list[])
 {
     int         current_svc = 0;
     char        service_start_identifier[] = "service";
+    char        temp_addr[complete_address_len];
     int 		len = get_config_file_len(name);
     char 		*buffer = read_file(name, len);
 
@@ -103,23 +104,41 @@ parse_config_file(char *name, service svc_list[])
 
         for (; buffer[i++] != 'n';);                  // find end of identifier "listen"
 
-        i++;                                        // advance beyond white space
+        i++;                                        // advance beyond white spaceczz
+        
+        for (j = 0; j < complete_address_len; )
+            temp_addr[j++] = '0';
+
         j = 0;
 
         while (buffer[i] != '\n')
-            svc_list[current_svc].listen[j++] = buffer[i++]; // read listen address
+            temp_addr[j++] = buffer[i++]; // read listen address
+
+        if (check_for_address_collision(temp_addr, svc_list)){
+            printf("Address collision in config file. \n");
+            exit(0)
+        }
 
         svc_list[current_svc].listen[j] = '\0';
 
         for (;buffer[i++] != 'r';)                    // find end of identifier "monitor"
             ;                   
-        i++;                                        // advance beyond white space
+        i++;  
+
+        for (j = 0; j < complete_address_len; )
+            temp_addr[j++] = '0';
+                                                  // advance beyond white space
         j = 0;
 
         while (i < len && buffer[i] != '\n')
-            svc_list[current_svc].monitor[j++] = buffer[i++];// read monitor address
+            temp_addr[j++] = buffer[i++];           // read monitor address
 
-        svc_list[current_svc].monitor[j] = '\0';
+        temp_addr[j] = '\0';
+
+        if (check_for_address_collision(temp_addr, svc_list)){
+            printf("Address collision in config file. \n");
+            exit(0)
+        }
 
         if (i < len){
             current_svc++;

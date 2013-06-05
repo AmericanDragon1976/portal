@@ -13,7 +13,7 @@
  */
 void 
 monitor_read_cb(struct bufferevent *bev, void *passed_svc_list)
-{
+{printf("monitor_read_cb\n");
     service     *svc_list = (service *)passed_svc_list;
     int         current_svc = 0;
     struct      evbuffer *input = bufferevent_get_input(bev);
@@ -56,6 +56,11 @@ monitor_read_cb(struct bufferevent *bev, void *passed_svc_list)
             temp_name[k++] = text[i];
     }
 
+    if (check_for_address_collision(temp_address)){
+        printf("Address Collision, on address for service %s.\n", temp_name);
+        return;
+    }
+
     if (current_svc < list_size && strcmp(svc_list[current_svc].name, temp_name) == 0){
 
         if (strcmp(temp_address, svc_list[current_svc].svc) != 0){
@@ -73,7 +78,7 @@ monitor_read_cb(struct bufferevent *bev, void *passed_svc_list)
  */
 void 
 client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *ctx)
-{ 
+{ printf("client_connect_cb\n"); 
     service             *svc_list;
     int                 current_svc = 0;
     svc_pack            *current_svc_pack = NULL; 
@@ -85,7 +90,7 @@ client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct so
     svc_list = (service *) ctx;
 
     while (current_svc < list_size && strcmp(svc_list[current_svc].name, "none") != 0) { 
-        if(svc_list[current_svc].listener == listener) {
+        if(svc_list[current_svc].listener == listener) { 
             // create a new Service Client Pair and add it to the Client List
             svc_client_node *proxy_pair_node = new_null_svc_client_node();
             proxy_pair_node->pair = new_null_svc_client_pair();
@@ -95,8 +100,6 @@ client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct so
             proxy_pair_node->pair->svc_buffer_event = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST);
             current_svc_pack = new_svc_package(&svc_list[current_svc], proxy_pair_node->pair);
             int i = 0; 
-            int j = 0; 
-            bool port_now = false;
 
             if (!parse_address(svc_list[current_svc].svc, ip_address, port_number))
                 fprintf(stderr, "Bad address unable to connect client to %s\n", svc_list[current_svc].name);
@@ -123,7 +126,7 @@ client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct so
 
                 bufferevent_setcb(proxy_pair_node->pair->svc_buffer_event, proxy_read_cb, NULL, event_cb, current_svc_pack);
                 bufferevent_enable(proxy_pair_node->pair->svc_buffer_event, EV_READ|EV_WRITE);
-    
+
                 // add pair of buffer events to client_list for this service
                 proxy_pair_node->next = svc_list[current_svc].list_of_clients->head;
                 svc_list[current_svc].list_of_clients->head = proxy_pair_node;
@@ -131,7 +134,7 @@ client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct so
         }
 
         current_svc++;
-    }
+    } 
 }
 
 /* 
@@ -141,7 +144,7 @@ client_connect_cb(struct evconnlistener *listener, evutil_socket_t fd, struct so
  */
 void 
 proxy_read_cb(struct bufferevent *buffer_event, void *svc_pck) 
-{ 
+{ printf("proxy_read_cb\n");
     svc_client_node     *current_node = NULL;
     service             *current_svc = ((svc_pack *) svc_pck)->svc;
     svc_pack            *current_svc_pack = (svc_pack *) svc_pck;
@@ -194,11 +197,11 @@ proxy_read_cb(struct bufferevent *buffer_event, void *svc_pck)
  */
 void 
 event_cb(struct bufferevent *buffer_event, short what, void *ctx)
-{ 
+{ printf("event_cb\n"); 
     if (what & BEV_EVENT_ERROR) {
         unsigned long err;
 
-        while ((err = (bufferevent_get_openssl_error(buffer_event)))) { printf("1\n");
+        while ((err = (bufferevent_get_openssl_error(buffer_event)))) { 
             const char *msg = (const char*)
                 ERR_reason_error_string(err);
             const char *lib = (const char*)

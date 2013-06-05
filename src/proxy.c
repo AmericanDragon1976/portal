@@ -74,7 +74,6 @@ init_services(struct event_base *event_loop, service svc_list[])
     while (current_svc < list_size && strcmp(svc_list[current_svc].name, "none") != 0) {
         char ip_address[ip_len], port_number[port_len];
         int i = 0; 
-        int j = 0; 
 
         if (!parse_address(svc_list[current_svc].monitor, ip_address, port_number))
             fprintf(stderr, "Bad address unable to connect to monitor for %s\n", svc_list->name);
@@ -127,7 +126,7 @@ init_service_listeners(struct event_base *event_loop, service svc_list[])
             svc_address.sin_family = AF_INET;
             svc_address.sin_addr.s_addr = (*ip_bytes).s_addr; 
             svc_address.sin_port = htons(port_number_as_int); 
-            svc_list[current_svc].listener = evconnlistener_new_bind(event_loop, client_connect_cb, &svc_list[current_svc], LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &svc_address, sizeof(svc_address));
+            svc_list[current_svc].listener = evconnlistener_new_bind(event_loop, client_connect_cb, svc_list, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr *) &svc_address, sizeof(svc_address));
             if (!svc_list[current_svc].listener)
                 printf("Couldn't create Listener\n");
         } 
@@ -169,6 +168,23 @@ set_criteria_addrinfo()
 }
 
 /*
+ * Recives an address and an array of serices, returns true if the address matches any address for listen, monitor, or svc that is allready assigned to a service, 
+ * otherwise it returns false.
+ */
+bool 
+check_for_address_collision(char *address, service *svc_list)
+{
+    int i = 0;
+
+    while(i < list_size && strcmp(svc_list[i].name, "none") != 0){
+        if  (strcmp(svc_list[i].listen, address) == 0 || strcmp(svc_list[i].monitor) == 0 || strcmp(svc_list[i].svc) == 0 )
+            return (true);
+        i++;
+    }
+    return (false);
+}
+
+/*
  * Reads in config file. connects to monitor and gets current address for service, creats listeners to accept clients, 
  * proxyies clients to the appropiate service. 
  */ /*
@@ -181,7 +197,7 @@ main(int argc, char **argv)
     struct event        *signal_event = NULL;
 
 
-     // -C flag required but has no effect, if  others added change verfyComndlnArgs() function 
+     // -C flag required but has no effect, if  others added change validate_args() function 
 
 
     if (!validate_args(argc, argv))
