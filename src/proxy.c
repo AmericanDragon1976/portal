@@ -73,6 +73,7 @@ init_services(struct event_base *event_loop, service svc_list[])
 
     while (current_svc < list_size && strcmp(svc_list[current_svc].name, "none") != 0) {
         char ip_address[ip_len], port_number[port_len];
+        struct bufferevent      *temp_bev = svc_list[current_svc].monitor_buffer_event;
         int i = 0; 
 
         if (!parse_address(svc_list[current_svc].monitor, ip_address, port_number))
@@ -87,16 +88,16 @@ init_services(struct event_base *event_loop, service svc_list[])
                 continue;
             } 
 
-            svc_list[current_svc].monitor_buffer_event = bufferevent_socket_new(event_loop, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST); 
-            bufferevent_setcb(svc_list[current_svc].monitor_buffer_event, monitor_read_cb, NULL, event_cb, svc_list); 
+            temp_bev = bufferevent_socket_new(event_loop, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST); 
+            bufferevent_setcb(temp_bev, monitor_read_cb, NULL, event_cb, svc_list); 
 
-            if(bufferevent_socket_connect(svc_list[current_svc].monitor_buffer_event, server->ai_addr, server->ai_addrlen) != 0) { 
+            if(bufferevent_socket_connect(temp_bev, server->ai_addr, server->ai_addrlen) != 0) { 
                 fprintf(stderr, "Error connecting to monitor\n"); 
-                bufferevent_free(svc_list->monitor_buffer_event); 
+                bufferevent_free(temp_bev); 
             } 
 
-            bufferevent_enable(svc_list[current_svc].monitor_buffer_event, EV_READ|EV_WRITE);
-            bufferevent_write(svc_list[current_svc].monitor_buffer_event, svc_list[current_svc].name, sizeof(svc_list[current_svc].name));
+            bufferevent_enable(temp_bev, EV_READ|EV_WRITE);
+            bufferevent_write(temp_bev, svc_list[current_svc].name, sizeof(svc_list[current_svc].name));
         }
         current_svc++;
     }
