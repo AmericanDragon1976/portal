@@ -2,8 +2,8 @@
 
 Vagrant.configure("2") do |config|
 
-  config.vm.box     = 'pagoda_precise_base'
-  config.vm.box_url = 'https://s3.amazonaws.com/vagrant.pagodabox.com/boxes/ubuntu-12.04-x86_64-base.box'
+  config.vm.box     = 'ubuntu_quantal_64'
+  config.vm.box_url = 'https://github.com/downloads/roderik/VagrantQuantal64Box/quantal64.box'
 
   config.vm.provider "virtualbox" do |v|
     v.customize ["modifyvm", :id, "--cpus", "2", "--memory", "1024", "--cpuexecutioncap", "75"]
