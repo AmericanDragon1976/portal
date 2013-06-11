@@ -56,7 +56,7 @@ monitor_read_cb(struct bufferevent *bev, void *passed_svc_list)
             temp_name[k++] = text[i];
     }
 
-    if (check_for_address_collision(temp_address)){
+    if (check_for_address_collision(temp_address, svc_list)){
         printf("Address Collision, on address for service %s.\n", temp_name);
         return;
     }

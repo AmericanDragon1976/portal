@@ -116,7 +116,7 @@ parse_config_file(char *name, service svc_list[])
 
         if (check_for_address_collision(temp_addr, svc_list)){
             printf("Address collision in config file. \n");
-            exit(0)
+            exit(0);
         }
 
         svc_list[current_svc].listen[j] = '\0';
@@ -137,7 +137,7 @@ parse_config_file(char *name, service svc_list[])
 
         if (check_for_address_collision(temp_addr, svc_list)){
             printf("Address collision in config file. \n");
-            exit(0)
+            exit(0);
         }
 
         if (i < len){

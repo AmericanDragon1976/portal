@@ -73,11 +73,13 @@ init_services(struct event_base *event_loop, service svc_list[])
 
     while (current_svc < list_size && strcmp(svc_list[current_svc].name, "none") != 0) {
         char ip_address[ip_len], port_number[port_len];
-        struct bufferevent      *temp_bev = svc_list[current_svc].monitor_buffer_event;
+        struct bufferevent      *temp_bev_ptr = svc_list[current_svc].monitor_buffer_event;
+        char                    temp_name[sizeof(svc_list[current_svc].name)];
+        syrcpy(temp_name, svc_list[current_svc].name);
         int i = 0; 
 
         if (!parse_address(svc_list[current_svc].monitor, ip_address, port_number))
-            fprintf(stderr, "Bad address unable to connect to monitor for %s\n", svc_list->name);
+            fprintf(stderr, "Bad address unable to connect to monitor for %s\n", temp_name);
         else {
             hints =  set_criteria_addrinfo();
             i = getaddrinfo(ip_address, port_number, hints, &server);
@@ -88,16 +90,16 @@ init_services(struct event_base *event_loop, service svc_list[])
                 continue;
             } 
 
-            temp_bev = bufferevent_socket_new(event_loop, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST); 
-            bufferevent_setcb(temp_bev, monitor_read_cb, NULL, event_cb, svc_list); 
+            temp_bev_ptr = bufferevent_socket_new(event_loop, -1, BEV_OPT_CLOSE_ON_FREE|EV_PERSIST); 
+            bufferevent_setcb(temp_bev_ptr, monitor_read_cb, NULL, event_cb, svc_list); 
 
-            if(bufferevent_socket_connect(temp_bev, server->ai_addr, server->ai_addrlen) != 0) { 
+            if(bufferevent_socket_connect(temp_bev_ptr, server->ai_addr, server->ai_addrlen) != 0) { 
                 fprintf(stderr, "Error connecting to monitor\n"); 
-                bufferevent_free(temp_bev); 
+                bufferevent_free(temp_bev_ptr); 
             } 
 
-            bufferevent_enable(temp_bev, EV_READ|EV_WRITE);
-            bufferevent_write(temp_bev, svc_list[current_svc].name, sizeof(svc_list[current_svc].name));
+            bufferevent_enable(temp_bev_ptr, EV_READ|EV_WRITE);
+            bufferevent_write(temp_bev_ptr, temp_name, sizeof(temp_name));
         }
         current_svc++;
     }
@@ -178,7 +180,7 @@ check_for_address_collision(char *address, service *svc_list)
     int i = 0;
 
     while(i < list_size && strcmp(svc_list[i].name, "none") != 0){
-        if  (strcmp(svc_list[i].listen, address) == 0 || strcmp(svc_list[i].monitor) == 0 || strcmp(svc_list[i].svc) == 0 )
+        if  (strcmp(svc_list[i].listen, address) == 0 || strcmp(svc_list[i].monitor, address) == 0 || strcmp(svc_list[i].svc, address) == 0 )
             return (true);
         i++;
     }
