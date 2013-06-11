@@ -9,7 +9,7 @@ Vagrant.configure("2") do |config|
     v.customize ["modifyvm", :id, "--cpus", "2", "--memory", "1024", "--cpuexecutioncap", "75"]
   end
 
-  config.vm.synced_folder ".", "/vagrant", :nfs => true
+  config.vm.synced_folder ".", "/vagrant"
 
   config.vm.provision :chef_solo do |chef|
     chef.add_recipe 'build-essential'
