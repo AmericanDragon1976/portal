@@ -75,7 +75,7 @@ init_services(struct event_base *event_loop, service svc_list[])
         char ip_address[ip_len], port_number[port_len];
         struct bufferevent      *temp_bev_ptr = svc_list[current_svc].monitor_buffer_event;
         char                    temp_name[sizeof(svc_list[current_svc].name)];
-        syrcpy(temp_name, svc_list[current_svc].name);
+        strcpy(temp_name, svc_list[current_svc].name);
         int i = 0; 
 
         if (!parse_address(svc_list[current_svc].monitor, ip_address, port_number))
@@ -190,7 +190,7 @@ check_for_address_collision(char *address, service *svc_list)
 /*
  * Reads in config file. connects to monitor and gets current address for service, creats listeners to accept clients, 
  * proxyies clients to the appropiate service. 
- */ /*
+ */ 
 int 
 main(int argc, char **argv) 
 {
@@ -218,4 +218,3 @@ main(int argc, char **argv)
     event_base_dispatch(event_loop);
     event_base_free(event_loop);
 }
-*/
